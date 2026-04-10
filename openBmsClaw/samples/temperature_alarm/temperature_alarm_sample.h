@@ -1,0 +1,7 @@
+#ifndef OPEN_BMS_CLAW_SAMPLES_TEMPERATURE_ALARM_SAMPLE_H
+#define OPEN_BMS_CLAW_SAMPLES_TEMPERATURE_ALARM_SAMPLE_H
+
+void temperature_alarm_sample_init(void);
+void temperature_alarm_sample_process(void);
+
+#endif

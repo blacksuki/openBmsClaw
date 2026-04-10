@@ -1,0 +1,33 @@
+# macOS / Finder
+.DS_Store
+
+# Local caches
+.cache/
+**/.WeDrive
+
+# Root workspace settings currently contain absolute local paths
+/.vscode/
+
+# IDE-generated state that should not be shared
+**/.settings/
+**/.idea/
+
+# STM32 / CMake generated build outputs
+**/build/
+**/Debug/
+**/Release/
+**/CMakeFiles/
+**/cmake-build-*/
+
+# Generated artifacts and logs
+**/*.log
+
+# Locally extracted installer bundles under reference archives
+bmsClaw/archive/
+90.mini-Lite/
+91.reference/
+
+# Optional local helper files
+*.swp
+*.swo
+*~
