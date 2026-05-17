@@ -25,7 +25,7 @@
 # Locally extracted installer bundles under reference archives
 bmsClaw/archive/
 90.mini-Lite/
-91.reference/
+# 91.reference/
 
 # Optional local helper files
 *.swp
