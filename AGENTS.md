@@ -3,31 +3,32 @@
 ## 1. 当前项目名称与目标
 当前项目主名称统一为：
 
-> `bmsClaw`
+> `openBattery`
 
 本仓库当前服务于一个明确目标：
 
-> 构建一套面向中小移动电源厂商的开源电源管理 / BMS 平台方案，并以 `bmsClaw` 作为当前实施主线，逐步形成可扩展、可复用、可量产迁移的 STM32 平台。
+> 构建一套面向中小移动电源厂商的开源电源管理 / BMS 平台方案，首发落地场景定位为“日本市场高品质移动电源平台”，以 `openBattery` 作为当前实施主线，逐步形成可扩展、可复用、可量产迁移的 STM32 平台。
 
 当前系统目标可总结为：
 
-1. **平台目标**
-   面向中小厂商提供一套 **模块化、可裁剪、可二次开发** 的开源方案，而不是只交付一套固定板卡或单一 SKU。
+1. **战略与市场目标**
+   以“占领日本市场心智”为核心，告别传统黑盒模式，通过“安全 + 性能数字化管理（数据可视化）”实现高端产品差异化。作为集成平台方，充分利用成熟电芯与专用 SoC 方案的优势。
 
-2. **技术目标**
-   平台架构默认围绕 **STM32 + 模块化硬件 + HAL + 可扩展软件框架** 展开，并明确区分：
-   - `BMS`
-   - `电源转换`
-   - `协议管理`
+2. **平台目标**
+   面向中小厂商提供一套 **模块化、可裁剪、可二次开发** 的开源方案，而不是只交付一套固定板卡或单一 SKU。确立“要接口不要源码”的 SDK 合作模式，实现标准化集成。
+
+3. **技术目标**
+   采用“SoC 负责体力活（升降压转换、快充协议握手），MCU 负责脑力活（策略调度、数据可视化与人机交互）”的双芯片协同架构。默认围绕 **STM32 + 模块化硬件 + HAL + 可扩展软件框架** 展开，明确区分：
+   - `BMS 与电芯安全监控`（温控、过流预警与电芯均衡）
+   - `电源转换与专用 SoC 驱动`（如英集芯、智融等芯片对接）
+   - `协议管理与事件回调`（快充握手通知与多设备功率动态分配）
    - `BLE / 通信`
-   - `显示 / 交互`
+   - `显示 / 交互`（屏幕/LED剩余使用时长预测、健康度显示、按键处理与 IAP 升级）
    - `底座 / 托盘扩展`
 
-3. **工程目标**
-   采用“**先最小可运行验证，再逐步平台化**”的路线，先完成主控 bring-up、基础外设、单链路验证，再逐步接入 BMS、协议和功率协同。
+4. **工程目标**
+   采用“**先最小可运行验证，再逐步平台化**”的路线，先完成主控 bring-up、基础外设、单链路验证，再逐步接入专用 SoC 的 API 库、安全策略和功率协同。
 
-4. **参考目标**
-   `90.mini-Lite` 仅作为参考产品样本，用于帮助理解多口移动电源、底座/托盘、LED 状态机等需求，不是当前项目的直接实现目标。
 
 ---
 
@@ -35,16 +36,18 @@
 本仓库当前至少包含以下几层内容：
 
 ### 2.1 当前主项目层
-- `[0_System/00.tech_archture.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/00.tech_archture.md)`
-- `[0_System/10.hardware_softare_frame.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/10.hardware_softare_frame.md)`
-- `[0_System/11.prepare_dev.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/11.prepare_dev.md)`
-- `[0_System/12.procurement_list.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/12.procurement_list.md)`
-- `[0_System/13.software_installation.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/13.software_installation.md)`
-- `[1_Plan/Plan-Week-0325.md](/Users/huoward/Project/101.bms/bmsClaw/1_Plan/Plan-Week-0325.md)`
+- `[0_System/00.tech_archture.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/00.tech_archture.md)`
+- `[0_System/01.update_arch.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/01.update_arch.md)`
+- `[0_System/10.hardware_softare_frame.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/10.hardware_softare_frame.md)`
+- `[0_System/11.prepare_dev.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/11.prepare_dev.md)`
+- `[0_System/12.procurement_list.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/12.procurement_list.md)`
+- `[0_System/13.software_installation.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/13.software_installation.md)`
+- `[1_Plan/Plan-Week-0325.md](/Users/huoward/Project/11.openBattery/openBmsClaw/1_Plan/Plan-Week-0325.md)`
 
-这些文档描述的是 **`bmsClaw` 当前主线**：
+这些文档描述的是 **`openBattery` 当前主线**：
 
-- 当前项目名和工作边界
+- 当前项目名、日本市场战略定位与工作边界
+- 双核协同架构与专用 SoC 集成规范
 - 平台架构和模块边界
 - 开发准备与软件安装
 - 当前执行计划
@@ -52,8 +55,8 @@
 凡涉及当前项目目标、工作顺序、文档口径和路径边界，优先以这些文档为准。
 
 ### 2.2 当前代码实现层
-- `[openBmsClaw/CMakeLists.txt](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/CMakeLists.txt)`
-- `[openBmsClaw/Src/main.c](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/Src/main.c)`
+- `[openBmsClaw/CMakeLists.txt](/Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/CMakeLists.txt)`
+- `[openBmsClaw/Src/main.c](/Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/Src/main.c)`
 
 这是当前仓库内已经存在的 **STM32 生成工程**。目前可确认的事实包括：
 
@@ -93,7 +96,7 @@
 - 非必要不手工编辑
 
 ### 2.4 参考项目层
-- `[90.mini-Lite/miniLite_system_design.md](/Users/huoward/Project/101.bms/bmsClaw/90.mini-Lite/miniLite_system_design.md)`
+- `[90.mini-Lite/miniLite_system_design.md](/Users/huoward/Project/11.openBattery/openBmsClaw/90.mini-Lite/miniLite_system_design.md)`
 
 这是一个 **参考项目**，用于帮助理解：
 
@@ -103,7 +106,7 @@
 - 温度保护
 - 多口功率限制
 
-它的作用是 **参考样本**，不是当前 `bmsClaw` 的主规格源头。
+它的作用是 **参考样本**，不是当前 `openBattery` 的主规格源头。
 
 ### 2.5 外部参考资料层
 - `91.reference/`
@@ -119,22 +122,22 @@
 ## 3. 文档优先级
 涉及需求、设计和当前工作判断时，按以下顺序理解：
 
-1. `[0_System/00.tech_archture.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/00.tech_archture.md)`  
-   当前项目名称、目标、仓库边界和工作路径说明。
+1. `[0_System/00.tech_archture.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/00.tech_archture.md)` 与 `[0_System/01.update_arch.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/01.update_arch.md)`  
+   当前项目名称、日本市场商业与技术启动方案、双核分工架构、SDK 集成策略及工作路径说明。
 
-2. `[0_System/10.hardware_softare_frame.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/10.hardware_softare_frame.md)`  
+2. `[0_System/10.hardware_softare_frame.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/10.hardware_softare_frame.md)`  
    当前最核心的模块化硬件 / 软件框架说明。
 
-3. `[1_Plan/Plan-Week-0325.md](/Users/huoward/Project/101.bms/bmsClaw/1_Plan/Plan-Week-0325.md)` 及其 `item` 文档  
+3. `[1_Plan/Plan-Week-0325.md](/Users/huoward/Project/11.openBattery/openBmsClaw/1_Plan/Plan-Week-0325.md)` 及其 `item` 文档  
    当前执行计划与本周动作。
 
-4. `[0_System/11.prepare_dev.md](/Users/huoward/Project/101.bms/bmsClaw/0_System/11.prepare_dev.md)`、`12`、`13` 系列  
+4. `[0_System/11.prepare_dev.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/11.prepare_dev.md)`、`12`、`13` 系列  
    当前开发准备、采购和工具链路线。
 
-5. `[openBmsClaw/](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw)`  
+5. `[openBmsClaw/](/Users/huoward/Project/11.openBattery/openBmsClaw)`  
    当前代码事实来源。
 
-6. `[90.mini-Lite/miniLite_system_design.md](/Users/huoward/Project/101.bms/bmsClaw/90.mini-Lite/miniLite_system_design.md)`  
+6. `[90.mini-Lite/miniLite_system_design.md](/Users/huoward/Project/11.openBattery/openBmsClaw/90.mini-Lite/miniLite_system_design.md)`  
    仅作为参考项目样本。
 
 7. `91.reference/`  
@@ -162,7 +165,7 @@
 ### 4.1 先澄清边界
 先明确：
 
-- `bmsClaw` 是当前主项目
+- `openBattery` 是当前主项目
 - `90.mini-Lite` 是参考项目
 - `build/` 是生成物
 - `91.reference/` 是外部参考资料
@@ -187,16 +190,22 @@
 ### 4.3 先做结构，再做复杂功能
 在当前工程基础上，优先规划并逐步引入：
 
-- `app/`
-- `services/`
+- `app/` （人机交互、电量与剩余时长可视化、IAP 固件升级）
+- `services/` （智能功率调度策略、温度过载保护管理）
 - `hal/`
-- `drivers/`
+- `drivers/` （专用 SoC 驱动层，对接英集芯/智融等 SDK 标准 API）
 - `board/`
 - `config/`
 
 不要一开始把产品逻辑、板级细节和协议控制全部堆进 `main.c`。
 
-### 4.4 参考项目只提炼能力，不直接照搬
+### 4.4 奉行“要接口不要源码”的集成准则
+对接外部专用 SoC（英集芯、智融等）时，确立合理的谈判与开发边界：
+- 拒绝黑盒，要求具备动态配置与状态读取能力；
+- 不索要或破解底层源码，保障系统与 IP 安全；
+- 重点索要并封装标准 API 接口，包括：数据读取（电压、温度实时监控）、参数配置（如 OCP 过流保护阈值设定）、事件回调（快充握手成功通知、异常状态中断）。
+
+### 4.5 参考项目只提炼能力，不直接照搬
 从 `90.mini-Lite` 中主要提炼：
 
 - 端口角色
@@ -212,8 +221,8 @@
 
 ---
 
-## 5. Codex 工作准则
-Codex 在本仓库中工作时，应遵守以下原则：
+## 5. Codex 与 Antigravity 工作准则
+Codex 与 Antigravity 在本仓库中工作时，应遵守以下原则：
 
 ### 5.1 先判断任务类型
 先判断请求属于哪一类：
@@ -247,7 +256,7 @@ Codex 在本仓库中工作时，应遵守以下原则：
 则必须明确写出“未执行”及原因。
 
 ### 5.4 文档必须能落地
-对于系统文档，Codex 不应只写概念性表达。  
+对于系统文档，Codex 与 Antigravity 不应只写概念性表达。  
 优先写出：
 
 - 模块职责
@@ -345,7 +354,7 @@ Codex 在本仓库中工作时，应遵守以下原则：
 ## 9. 文档更新规则
 下列变更通常应同步更新文档：
 
-- 当前项目名称、边界变化：更新 `0_System/00.tech_archture.md`
+- 当前项目名称、战略与边界变化：更新 `0_System/00.tech_archture.md` 与 `0_System/01.update_arch.md`
 - 模块边界变化：更新 `0_System/10.hardware_softare_frame.md`
 - 开发路线、工具链、采购变化：更新 `0_System/11-13` 系列文档
 - 当前执行计划变化：更新 `1_Plan/*.md`
@@ -374,15 +383,16 @@ Codex 在本仓库中工作时，应遵守以下原则：
 - 当前 STM32 起步工程是否稳定
 - 参考项目是否被正确隔离
 
-如果任务涉及硬件逻辑，回复中应明确建议验证项，例如：
+如果任务涉及硬件逻辑与业务架构，回复中应明确建议验证项，例如：
 
-- LED 状态机
-- 按键短按 / 长按
-- ADC / NTC 采样
-- BMS 采样和保护
-- 电源转换链路
-- 协议协商
-- 底座识别
+- 数字化显示与交互（OLED/LED 剩余时长预测与电芯健康度显示）
+- 按键短按 / 长按与功能切换
+- ADC / NTC 实时温控采样与动态功率调整策略
+- BMS 采样、电芯均衡与过流保护（OCP 动态配置）
+- 专用 SoC 协议握手回调与多设备智能功率分配
+- PSE 认证合规测试项（过压过流保护、热设计与 EMC）
+- 航空便携安全合规（≤100Wh 门槛管理）
+- Qi2 磁吸充电与底座识别
 - 托盘模式限制
 
 ---
@@ -405,10 +415,10 @@ Codex 在本仓库中工作时，应遵守以下原则：
 
 ---
 
-## 12. 给 Codex 的最终要求
-在这个仓库里，Codex 的最佳行为不是“快速写很多内容”，而是：
+## 12. 给 Codex 与 Antigravity 的最终要求
+在这个仓库里，Codex 与 Antigravity 的最佳行为不是“快速写很多内容”，而是：
 
-1. 先对齐当前项目主线 `bmsClaw`
+1. 先对齐当前项目主线 `openBattery`
 2. 再识别当前代码事实、参考项目和生成物边界
 3. 用最小、最清晰、最可验证的方式推进
 4. 对新手保持解释性
@@ -418,5 +428,5 @@ Codex 在本仓库中工作时，应遵守以下原则：
 只要遵守这六点，输出就会同时符合：
 
 - 当前开发路线
-- Codex 的协作最佳实践
+- Codex 与 Antigravity 的协作最佳实践
 - 嵌入式开发新手的阅读需要
