@@ -2,35 +2,35 @@
 #define OPEN_BMS_CLAW_DRIVERS_SOC_SAL_H
 
 #include <stdbool.h>
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h>
 
-#include "config/sys_config.h"
-#include "hal/i2c/hal_i2c.h"
+#include "../config/sys_config.h"
+#include "../hal/i2c/hal_i2c.h"
 
 /* ============================================================================
  * SoC 抽象层数据结构与错误码定义
- * ============================================================================ */
-typedef enum
-{
-    SOC_SAL_OK              = 0,    /* 通信与解析成功 */
-    SOC_SAL_ERR_OFFLINE     = -1,   /* 从机无响应/离线 */
-    SOC_SAL_ERR_BUSY        = -2,   /* 总线繁忙或被拉低 */
-    SOC_SAL_ERR_PARAM       = -3,   /* 参数范围错误 */
-    SOC_SAL_ERR_HW_LOCKED   = -4    /* 硬件被锁死，需执行总线自愈 */
+ * ============================================================================
+ */
+typedef enum {
+  SOC_SAL_OK = 0,            /* 通信与解析成功 */
+  SOC_SAL_ERR_OFFLINE = -1,  /* 从机无响应/离线 */
+  SOC_SAL_ERR_BUSY = -2,     /* 总线繁忙或被拉低 */
+  SOC_SAL_ERR_PARAM = -3,    /* 参数范围错误 */
+  SOC_SAL_ERR_HW_LOCKED = -4 /* 硬件被锁死，需执行总线自愈 */
 } soc_sal_status_t;
 
 /* 统一电源端口类型定义 */
-typedef enum
-{
-    SOC_PORT_TYPE_C1 = 0,           /* Type-C 1 主充放接口 */
-    SOC_PORT_TYPE_C2 = 1,           /* Type-C 2 充放接口 */
-    SOC_PORT_TYPE_A1 = 2            /* USB-A 放电接口 */
+typedef enum {
+  SOC_PORT_TYPE_C1 = 0, /* Type-C 1 主充放接口 */
+  SOC_PORT_TYPE_C2 = 1, /* Type-C 2 充放接口 */
+  SOC_PORT_TYPE_A1 = 2  /* USB-A 放电接口 */
 } soc_port_t;
 
 /* ============================================================================
  * 统一标准 API 接口声明 (拒绝黑盒，通过一致的函数屏蔽各家芯片寄存器差异)
- * ============================================================================ */
+ * ============================================================================
+ */
 
 /**
  * @brief 初始化 SoC 硬件抽象层及底层总线句柄
@@ -41,7 +41,8 @@ bool soc_sal_init(uint8_t i2c_addr);
 
 /**
  * @brief 在 SAL 层触发总线死锁自愈机制 (Bus Recovery)
- * @note 调用底层 GPIO 模拟翻转逻辑连续发出 9 个时钟脉冲，恢复 I2C 信道，并重置 SAL 状态机
+ * @note 调用底层 GPIO 模拟翻转逻辑连续发出 9 个时钟脉冲，恢复 I2C 信道，并重置
+ * SAL 状态机
  */
 void soc_sal_bus_recovery(void);
 
