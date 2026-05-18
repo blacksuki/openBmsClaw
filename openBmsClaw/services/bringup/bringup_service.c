@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "board/board.h"
-#include "config/feature_config.h"
+#include "config/sys_config.h"
 
 static bringup_stage_t s_current_stage = BRINGUP_STAGE_BOOT;
 

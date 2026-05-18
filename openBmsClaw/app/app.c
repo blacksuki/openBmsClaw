@@ -1,7 +1,7 @@
 #include "app/app.h"
 
 #include "board/board.h"
-#include "config/app_config.h"
+#include "config/sys_config.h"
 #include "samples/temperature_alarm/temperature_alarm_sample.h"
 #include "services/bms/bms_service.h"
 #include "services/bringup/bringup_service.h"

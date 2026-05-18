@@ -1,6 +1,6 @@
 #include "board/board.h"
 
-#include "config/board_config.h"
+#include "config/sys_config.h"
 #include "drivers/adc/adc_probe.h"
 #include "drivers/i2c/i2c_probe.h"
 
