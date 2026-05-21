@@ -7,6 +7,17 @@
 
 #include "../config/sys_config.h"
 #include "../hal/i2c/hal_i2c.h"
+#include "../hal/exti/hal_exti.h"
+
+/* 紧急中断告警事件类型掩码 */
+#define SOC_ALARM_NONE           0u
+#define SOC_ALARM_SHORT_CIRCUIT  (1u << 0) /* 负载短路告警 */
+#define SOC_ALARM_OVER_TEMP      (1u << 1) /* 电池或芯片过温 */
+#define SOC_ALARM_OVER_CURRENT   (1u << 2) /* 严重充电/放电过流 */
+#define SOC_ALARM_SYS_ERROR      (1u << 3) /* 底层系统或通信死锁故障 */
+
+/* SoC 紧急中断非阻塞回调函数类型定义 (微秒级执行，严禁含慢速I2C) */
+typedef void (*soc_sal_emergency_callback_t)(uint32_t alarm_mask);
 
 /* ============================================================================
  * SoC 抽象层数据结构与错误码定义
@@ -89,5 +100,17 @@ soc_sal_status_t soc_set_port_power(soc_port_t port, uint16_t max_power_w);
  * @return soc_sal_status_t
  */
 soc_sal_status_t soc_poll_events(uint32_t *event_mask);
+
+/**
+ * @brief 注册上层服务层紧急告警回调函数
+ * @param callback 回调函数指针 (将在底层 EXTI 中断上下文直接调用)
+ */
+void soc_sal_register_emergency_callback(soc_sal_emergency_callback_t callback);
+
+/**
+ * @brief 往 STM32 EXTI SWIER 软件中断寄存器写位，人为模拟触发一次硬件 INT 低电平脉冲
+ * @note 用于在无实物硬件环境下执行 100% 软件闭环中断自测
+ */
+void board_soc_int_sim_trigger(void);
 
 #endif /* OPEN_BMS_CLAW_DRIVERS_SOC_SAL_H */

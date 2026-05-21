@@ -20,6 +20,10 @@
 #define CONFIG_I2C_BUS_RECOVERY_ENABLE 1    /* 开启 I2C 总线死锁自愈机制 (连续发送 9 个时钟脉冲释放总线) */
 #define CONFIG_I2C_TIMEOUT_MS          10   /* 严格禁止无超时等待，设置标准外设 Timeout 为 10ms */
 
+/* 4. 紧急告警中断高速通道配置 */
+#define CONFIG_ENABLE_SOC_INT_HIGHWAY  1    /* 开启 SoC 硬件中断告警高速通道 */
+#define CONFIG_SOC_INT_PIN_INDEX       4    /* SoC 中断引脚对应为引脚 4 (PA4 -> EXTI4) */
+
 #include "board_config.h"
 #include "feature_config.h"
 #include "app_config.h"

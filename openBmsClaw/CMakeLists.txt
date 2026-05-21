@@ -49,6 +49,7 @@ set(sources_SRCS
 	${CMAKE_CURRENT_SOURCE_DIR}/drivers/i2c/i2c_probe.c
 	${CMAKE_CURRENT_SOURCE_DIR}/drivers/soc_sal.c
 	${CMAKE_CURRENT_SOURCE_DIR}/hal/i2c/hal_i2c.c
+	${CMAKE_CURRENT_SOURCE_DIR}/hal/exti/hal_exti.c
 	${CMAKE_CURRENT_SOURCE_DIR}/samples/temperature_alarm/temperature_alarm_sample.c
 	${CMAKE_CURRENT_SOURCE_DIR}/samples/temperature_alarm/temperature_alarm_sample_port.c
 	${CMAKE_CURRENT_SOURCE_DIR}/services/bms/bms_service.c

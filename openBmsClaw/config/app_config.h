@@ -9,7 +9,7 @@
 #define APP_ENABLE_UI_SERVICE          1    /* 启动极简 UI 服务 (通过状态灯闪烁展示系统存活状态) */
 
 #define APP_ENABLE_BMS_SERVICE         0    /* BMS 电芯保护与均衡服务，当前处于裁剪等待态 */
-#define APP_ENABLE_POWER_SERVICE       0    /* 多口智能功率动态分配服务，当前处于裁剪等待态 */
+#define APP_ENABLE_POWER_SERVICE       1    /* 多口智能功率动态分配服务，当前处于裁剪等待态 */
 #define APP_ENABLE_PROTOCOL_SERVICE    0    /* 快充协议通知服务，当前处于裁剪等待态 */
 
 /* 示例工程独立测试开关 */
