@@ -7,7 +7,7 @@
 
 它是当前子工程的补充规则，不是整个 `bmsClaw` 开源项目的总说明。
 
-如果本文件与根目录 [AGENTS.md](/Users/huoward/Project/101.bms/bmsClaw/AGENTS.md) 冲突：
+如果本文件与根目录 [AGENTS.md](../AGENTS.md) 冲突：
 
 - 以根目录 `AGENTS.md` 为准
 
@@ -21,11 +21,11 @@
 当前可确认的本地事实如下：
 
 - 当前工程名：`openBmsClaw`
-- 当前工程路径：`/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw`
+- 当前工程路径：`openBmsClaw/`
 - 当前工程由 `STM32CubeIDE for Visual Studio Code` 生成
 - 当前 `CMakePresets.json` 指向的器件事实为 `STM32F103C8T6`
-- 当前启动文件为 [Src/startup_stm32f103xx.S](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/Src/startup_stm32f103xx.S)
-- 当前链接脚本为 [stm32f103x8_flash.ld](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/stm32f103x8_flash.ld)
+- 当前启动文件为 [Src/startup_stm32f103xx.S](Src/startup_stm32f103xx.S)
+- 当前链接脚本为 [stm32f103x8_flash.ld](stm32f103x8_flash.ld)
 - 当前构建产物名为：
   - `openBmsClaw.elf`
   - `openBmsClaw.hex`
@@ -68,7 +68,7 @@
 
 其中：
 
-- [Src/main.c](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/Src/main.c) 是启动入口
+- [Src/main.c](Src/main.c) 是启动入口
 - 启动文件、链接脚本、生成工具链文件默认不要随意大改
 
 ### 3.2 自定义代码层
@@ -91,7 +91,7 @@
 - `config/`：功能开关、板型选择、默认能力配置
 
 ### 3.3 `main.c` 约束
-[Src/main.c](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/Src/main.c) 必须保持薄入口。
+[Src/main.c](Src/main.c) 必须保持薄入口。
 
 当前子工程中，`main.c` 只应长期承担：
 
@@ -229,9 +229,9 @@
 ### 5.3 配置规则
 优先把可切换行为放进：
 
-- [config/app_config.h](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/config/app_config.h)
-- [config/feature_config.h](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/config/feature_config.h)
-- [config/board_config.h](/Users/huoward/Project/101.bms/bmsClaw/openBmsClaw/config/board_config.h)
+- [config/app_config.h](config/app_config.h)
+- [config/feature_config.h](config/feature_config.h)
+- [config/board_config.h](config/board_config.h)
 
 不要把功能开关散落成到处都是的条件编译。
 

@@ -36,13 +36,13 @@
 本仓库当前至少包含以下几层内容：
 
 ### 2.1 当前主项目层
-- `[0_System/00.tech_archture.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/00.tech_archture.md)`
-- `[0_System/01.update_arch.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/01.update_arch.md)`
-- `[0_System/10.hardware_softare_frame.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/10.hardware_softare_frame.md)`
-- `[0_System/11.prepare_dev.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/11.prepare_dev.md)`
-- `[0_System/12.procurement_list.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/12.procurement_list.md)`
-- `[0_System/13.software_installation.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/13.software_installation.md)`
-- `[1_Plan/Plan-Week-0325.md](/Users/huoward/Project/11.openBattery/openBmsClaw/1_Plan/Plan-Week-0325.md)`
+- [0_System/00.tech_archture.md](0_System/00.tech_archture.md)
+- [0_System/01.update_arch.md](0_System/01.update_arch.md)
+- [0_System/10.hardware_softare_frame.md](0_System/10.hardware_softare_frame.md)
+- [0_System/11.prepare_dev.md](0_System/11.prepare_dev.md)
+- [0_System/12.procurement_list.md](0_System/12.procurement_list.md)
+- [0_System/13.software_installation.md](0_System/13.software_installation.md)
+- [1_Plan/Plan-Week-0325.md](1_Plan/Plan-Week-0325.md)
 
 这些文档描述的是 **`openBattery` 当前主线**：
 
@@ -55,8 +55,8 @@
 凡涉及当前项目目标、工作顺序、文档口径和路径边界，优先以这些文档为准。
 
 ### 2.2 当前代码实现层
-- `[openBmsClaw/CMakeLists.txt](/Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/CMakeLists.txt)`
-- `[openBmsClaw/Src/main.c](/Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/Src/main.c)`
+- [openBmsClaw/CMakeLists.txt](openBmsClaw/CMakeLists.txt)
+- [openBmsClaw/Src/main.c](openBmsClaw/Src/main.c)
 
 这是当前仓库内已经存在的 **STM32 生成工程**。目前可确认的事实包括：
 
@@ -96,7 +96,7 @@
 - 非必要不手工编辑
 
 ### 2.4 参考项目层
-- `[90.mini-Lite/miniLite_system_design.md](/Users/huoward/Project/11.openBattery/openBmsClaw/90.mini-Lite/miniLite_system_design.md)`
+- [90.mini-Lite/miniLite_system_design.md](90.mini-Lite/miniLite_system_design.md)
 
 这是一个 **参考项目**，用于帮助理解：
 
@@ -122,22 +122,22 @@
 ## 3. 文档优先级
 涉及需求、设计和当前工作判断时，按以下顺序理解：
 
-1. `[0_System/00.tech_archture.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/00.tech_archture.md)` 与 `[0_System/01.update_arch.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/01.update_arch.md)`  
+1. `[0_System/00.tech_archture.md](0_System/00.tech_archture.md)` 与 `[0_System/01.update_arch.md](0_System/01.update_arch.md)`
    当前项目名称、日本市场商业与技术启动方案、双核分工架构、SDK 集成策略及工作路径说明。
 
-2. `[0_System/10.hardware_softare_frame.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/10.hardware_softare_frame.md)`  
+2. `[0_System/10.hardware_softare_frame.md](0_System/10.hardware_softare_frame.md)`
    当前最核心的模块化硬件 / 软件框架说明。
 
-3. `[1_Plan/Plan-Week-0325.md](/Users/huoward/Project/11.openBattery/openBmsClaw/1_Plan/Plan-Week-0325.md)` 及其 `item` 文档  
+3. `[1_Plan/Plan-Week-0325.md](1_Plan/Plan-Week-0325.md)` 及其 `item` 文档
    当前执行计划与本周动作。
 
-4. `[0_System/11.prepare_dev.md](/Users/huoward/Project/11.openBattery/openBmsClaw/0_System/11.prepare_dev.md)`、`12`、`13` 系列  
+4. `[0_System/11.prepare_dev.md](0_System/11.prepare_dev.md)`、`12`、`13` 系列
    当前开发准备、采购和工具链路线。
 
-5. `[openBmsClaw/](/Users/huoward/Project/11.openBattery/openBmsClaw)`  
+5. `[openBmsClaw/](openBmsClaw/)`
    当前代码事实来源。
 
-6. `[90.mini-Lite/miniLite_system_design.md](/Users/huoward/Project/11.openBattery/openBmsClaw/90.mini-Lite/miniLite_system_design.md)`  
+6. `[90.mini-Lite/miniLite_system_design.md](90.mini-Lite/miniLite_system_design.md)`
    仅作为参考项目样本。
 
 7. `91.reference/`  
