@@ -1,10 +1,10 @@
 ---
-status: draft                 # ⚠️ Researcher 草稿,与 knowledge_map 同步,待专家核对后改 signed-off
-signed_off_by:
-signed_off_date:
+status: signed-off            # 与 knowledge_map 同步签收
+signed_off_by: black suki
+signed_off_date: 2026-06-27
 ---
 
-> 说明:问题已对齐 knowledge_map v0 的 7 个节点。专家请核对"选项→节点"映射是否合理,再签收。
+> 说明:问题对齐 knowledge_map 的 7 个节点,"选项→节点"映射经专家(black suki, 2026-06-27)核对签收。
 
 # 诊断脚本 (recognition 式,一次一问,按答案分叉,封顶约 7 问)
 

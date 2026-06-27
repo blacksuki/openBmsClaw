@@ -1,15 +1,15 @@
 ---
 industry: 日本移动电源平台 (mobile power / power bank, Japan; 储能的一个细分)
-status: draft                 # ⚠️ Researcher 摘录草稿,事实均引自下方 sources,未经专家核对。专家核对无误后改 signed-off
-signed_off_by:
-signed_off_date:
+status: signed-off            # 专家已核对签收
+signed_off_by: black suki
+signed_off_date: 2026-06-27
 sources:
   - "[1] 90_documents/日本市场移动电源平台项目启动方案.(docx/pdf)"
   - "[2] 0_System/00.tech_archture.md (核对日 2026-05-18)"
   - "[3] 91.reference/injoinic_soc_selection_guide_2026.md"
 ---
 
-> 说明:本文件由 agent 当 Researcher 从已有仓库资料摘录而成,每条「一句话事实」标注来源编号。**未经专家签收前,mentor 只能当"未校验"内容,不得当权威事实讲。** 专家请逐条核对、补「经典案例」、确认无误后把 status 改 signed-off。
+> 说明:本文件由 agent 当 Researcher 从已有仓库资料摘录,每条「一句话事实」标注来源编号,经专家(black suki, 2026-06-27)核对签收。`经典案例` 中仍带 `<专家补>` 的为待补充项,不影响事实可用性。
 
 # 行业骨架(节点)
 
