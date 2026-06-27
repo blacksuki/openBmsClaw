@@ -9,7 +9,7 @@
 ## 怎么用
 1. 专家填好并签收 `knowledge/knowledge_map.md` 和 `knowledge/diagnostic.md`(`status: signed-off`)。
 2. 把 `mentor.md` 贴进 Claude Code 会话(或作为 skill)。
-3. mentor 先跑诊断、回放确认范围,再按 `roadmap.md` 开课。
+3. mentor 先跑诊断、回放确认范围,据此生成/更新 `roadmap.md`,再开课。
 
 ## 目录
 - `mentor.md` — 导师提示(稳定不变)
