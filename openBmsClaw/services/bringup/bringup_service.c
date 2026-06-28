@@ -4,6 +4,7 @@
 
 #include "board/board.h"
 #include "config/sys_config.h"
+#include "drivers/soc_sal.h"
 
 static bringup_stage_t s_current_stage = BRINGUP_STAGE_BOOT;
 
@@ -15,6 +16,18 @@ static bool bringup_service_adc_enabled(void)
 static bool bringup_service_i2c_enabled(void)
 {
     return (FEATURE_ENABLE_I2C_PROBE != 0) && board_has_i2c_bus();
+}
+
+static bool bringup_service_soc_int_selftest_enabled(void)
+{
+    return (CONFIG_ENABLE_BRINGUP_SELFTEST != 0) && (CONFIG_ENABLE_SOC_INT_HIGHWAY != 0);
+}
+
+/* 探针阶段结束后的去向：开启自测则进入 SoC INT 自测，否则直接结束 */
+static bringup_stage_t bringup_service_stage_after_probes(void)
+{
+    return bringup_service_soc_int_selftest_enabled() ? BRINGUP_STAGE_SOC_INT_SELFTEST
+                                                      : BRINGUP_STAGE_DONE;
 }
 
 static void bringup_service_run_adc_probe(void)
@@ -93,6 +106,16 @@ static void bringup_service_run_i2c_probe(void)
     board_uart_write_string("i2c scan fail\r\n");
 }
 
+static void bringup_service_run_soc_int_selftest(void)
+{
+    if (board_has_uart_log())
+    {
+        board_uart_write_string("bringup: soc int selftest (sw EXTI trigger)\r\n");
+    }
+
+    soc_sal_int_selftest_trigger();
+}
+
 static bringup_stage_t bringup_service_next_stage(bringup_stage_t stage)
 {
     switch (stage)
@@ -107,10 +130,14 @@ static bringup_stage_t bringup_service_next_stage(bringup_stage_t stage)
             return BRINGUP_STAGE_ADC;
         }
 
-        return bringup_service_i2c_enabled() ? BRINGUP_STAGE_I2C : BRINGUP_STAGE_DONE;
+        return bringup_service_i2c_enabled() ? BRINGUP_STAGE_I2C
+                                             : bringup_service_stage_after_probes();
     case BRINGUP_STAGE_ADC:
-        return bringup_service_i2c_enabled() ? BRINGUP_STAGE_I2C : BRINGUP_STAGE_DONE;
+        return bringup_service_i2c_enabled() ? BRINGUP_STAGE_I2C
+                                             : bringup_service_stage_after_probes();
     case BRINGUP_STAGE_I2C:
+        return bringup_service_stage_after_probes();
+    case BRINGUP_STAGE_SOC_INT_SELFTEST:
         return BRINGUP_STAGE_DONE;
     case BRINGUP_STAGE_DONE:
     default:
@@ -137,6 +164,10 @@ void bringup_service_process(void)
     else if (s_current_stage == BRINGUP_STAGE_I2C)
     {
         bringup_service_run_i2c_probe();
+    }
+    else if (s_current_stage == BRINGUP_STAGE_SOC_INT_SELFTEST)
+    {
+        bringup_service_run_soc_int_selftest();
     }
 
     s_current_stage = bringup_service_next_stage(s_current_stage);

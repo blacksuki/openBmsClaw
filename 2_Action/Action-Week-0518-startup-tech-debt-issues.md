@@ -136,7 +136,7 @@ typedef struct {
 
 ## ISSUE-003：`app/` 直接触发底层中断自测 hook
 
-- **状态**：Open
+- **状态**：Resolved（2026-06-28 整改并通过构建验证，见文末「整改记录」）
 - **优先级**：Medium
 - **类型**：测试代码隔离 / 应用层边界
 - **代码位置**：
@@ -169,6 +169,23 @@ typedef struct {
 
 - `app/` 中不再出现 `*_sim_trigger()` 或 `*_selftest_*()` 调用。
 - 软件触发 EXTI 只存在于 bring-up/self-test 路径。
+
+### 整改记录（2026-06-28）
+
+实际改动（分支 `fix/issue-003-isolate-selftest-hook`）：
+
+- 新增单一来源宏 `CONFIG_ENABLE_BRINGUP_SELFTEST`（`config/sys_config.h`，F103 bring-up 默认 1，生产 profile 置 0）。
+- `board_soc_int_sim_trigger()` 重命名为 `soc_sal_int_selftest_trigger()`：实现仍在 `soc_sal.c`（SAL 层拥有 INT 高速通道，服务层不直接碰 HAL），声明仍在 `soc_sal.h`，不再以 `board_` 自测语义混入。
+- `bringup_service` 新增 `BRINGUP_STAGE_SOC_INT_SELFTEST` 阶段：在 `CONFIG_ENABLE_BRINGUP_SELFTEST && CONFIG_ENABLE_SOC_INT_HIGHWAY` 时，于探针阶段之后软件触发一次 INT 自测（`bringup_service.c` 调用 `soc_sal_int_selftest_trigger()`）。
+- `app/app.c` 删除 `[Test]` 自测块与不再需要的 `#include "drivers/soc_sal.h"`，app 层只调度 `bringup_service`。
+
+退出条件验证：
+
+- 构建：`cmake --build --preset Debug` → 退出码 0，`-Wall -Wextra -Wpedantic` 下 0 warning；`RAM 4184 B / FLASH 31420 B`（较前 +72 B，新增阶段与日志字符串）。
+- grep：`app/` 无 `*_sim_trigger`/`*_selftest_*` 调用；`hal_exti_software_trigger` 仅 `soc_sal.c` 调用，`soc_sal_int_selftest_trigger` 仅 `bringup_service.c` 调用 → 软件 EXTI 触发只在 bring-up/self-test 路径。
+- 两条退出条件均满足。
+
+> 旁注（不在本 issue 范围）：`soc_sal_init()` 目前未被 app/services 调用，故 `hal_exti_init()` 尚未把 EXTI4 回调接上；当前自测验证的是 SWIER 写入路径，而非完整中断回调链路。真实 INT 接线与初始化归 ISSUE-006。
 
 ---
 
@@ -297,7 +314,7 @@ typedef struct {
 | 序 | 动作 | 对应 issue | 依赖 |
 | --- | --- | --- | --- |
 | 1 | 收敛配置：删除或接入 `FEATURE_*` 死宏 + 建立 profile | ISSUE-004 | 无 |
-| 2 | 隔离 self-test hook：软件 EXTI 触发移入 `bringup_service` | ISSUE-003 | 无 |
+| 2 | 隔离 self-test hook：软件 EXTI 触发移入 `bringup_service` | ISSUE-003 ✅ 已完成（2026-06-28） | 无 |
 | 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 | 无 |
 | 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 | 依赖 3 |
 | 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 ✅ 已完成（2026-06-28） | 无 |
@@ -306,9 +323,10 @@ typedef struct {
 
 ## 3. 当前验证状态
 
-- 本文为技术债记录，ISSUE-001 已整改，其余 5 项仍 Open。
+- 本文为技术债记录，ISSUE-001、ISSUE-003 已整改，其余 4 项仍 Open。
 - 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码）。
 - 2026-06-28 ISSUE-001 已整改并通过 `arm-none-eabi-gcc` 构建验证（Debug，退出码 0，0 warning），`ninja -t deps` 确认 `app/`、`services/` 不再间接包含 HAL；未上板（编译期边界问题）。
+- 2026-06-28 ISSUE-003 已整改并通过构建验证（Debug，退出码 0，0 warning，FLASH 31420 B），grep 确认 `app/` 无自测 hook、软件 EXTI 触发仅在 bring-up 路径；未上板。
 - 本轮未运行新的编译或上板测试。
 - 之前已知构建结果为：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。
 - 真实 SoC 通信、真实 INT 引脚、功率限流和故障注入仍未完成硬件验证。

@@ -260,7 +260,7 @@ void soc_sal_register_emergency_callback(soc_sal_emergency_callback_t callback) 
   s_emergency_callback = callback;
 }
 
-void board_soc_int_sim_trigger(void) {
+void soc_sal_int_selftest_trigger(void) {
 #if CONFIG_ENABLE_SOC_INT_HIGHWAY
   if (board_has_uart_log()) {
     board_uart_write_string("SAL: Triggering SoC INT software pulse via EXTI SWIER...\r\n");

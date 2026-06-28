@@ -23,6 +23,7 @@
 /* 4. 紧急告警中断高速通道配置 */
 #define CONFIG_ENABLE_SOC_INT_HIGHWAY  1    /* 开启 SoC 硬件中断告警高速通道 */
 #define CONFIG_SOC_INT_PIN_INDEX       4    /* SoC 中断引脚对应为引脚 4 (PA4 -> EXTI4) */
+#define CONFIG_ENABLE_BRINGUP_SELFTEST 1    /* 开启 bring-up 自测：由 bringup_service 软件触发一次 SoC INT 高速通道验证中断链路；生产 profile 应置 0 */
 
 #include "board_config.h"
 #include "feature_config.h"

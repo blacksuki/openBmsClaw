@@ -1,7 +1,6 @@
 #include "app/app.h"
 
 #include "board/board.h"
-#include "drivers/soc_sal.h"
 #include "config/sys_config.h"
 #include "samples/temperature_alarm/temperature_alarm_sample.h"
 #include "services/bms/bms_service.h"
@@ -39,13 +38,6 @@ void app_init(void)
         board_uart_write_string("sample: temperature alarm\r\n");
 #endif
     }
-
-#if APP_ENABLE_POWER_SERVICE
-    if (board_has_uart_log()) {
-        board_uart_write_string("[Test] Simulating hardware INT low pulse via SWIER...\r\n");
-    }
-    board_soc_int_sim_trigger();
-#endif
 }
 
 void app_run(void)

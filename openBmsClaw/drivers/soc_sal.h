@@ -10,14 +10,15 @@
  * 本头文件只额外暴露 startup 阶段的自测 hook；它不依赖任何 HAL 头，
  * 因此 app/ 与 services/ 包含本头时不会间接看到 MCU 外设实现细节。
  *
- * 注：board_soc_int_sim_trigger() 是 bring-up 自测 hook，按 ISSUE-003 后续应
- * 迁入 bringup/self-test 路径并改名，本轮 (ISSUE-001) 不动其位置。
+ * 注：soc_sal_int_selftest_trigger() 是 bring-up 自测 hook，仅由 bringup_service
+ * 在 CONFIG_ENABLE_BRINGUP_SELFTEST 开启时调用，app/ 不再直接触发 (见 ISSUE-003)。
  */
 
 /**
- * @brief 往 STM32 EXTI SWIER 软件中断寄存器写位，人为模拟触发一次硬件 INT 低电平脉冲
- * @note 用于在无实物硬件环境下执行 100% 软件闭环中断自测
+ * @brief SAL 层自测：往 STM32 EXTI SWIER 写位，软件触发一次 SoC INT 高速通道
+ * @note 仅用于 bring-up/self-test 路径，在无实物硬件时执行 100% 软件闭环中断自测；
+ *       受 CONFIG_ENABLE_SOC_INT_HIGHWAY 与调用方 CONFIG_ENABLE_BRINGUP_SELFTEST 约束
  */
-void board_soc_int_sim_trigger(void);
+void soc_sal_int_selftest_trigger(void);
 
 #endif /* OPEN_BMS_CLAW_DRIVERS_SOC_SAL_H */
