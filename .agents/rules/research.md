@@ -13,9 +13,9 @@ When researching design specifications, current state, or upcoming steps:
 
 ---
 
-## 2. Strict Isolation of Reference Code
-- Treat `90.mini-Lite/` purely as an educational reference.
-- Do NOT confuse it with the active `openBattery` project scope. When explaining architecture, explicitly distinguish between the "Reference Project design (mini-Lite)" and the "Current openBattery architecture".
+## 2. Reference Materials
+- The former reference project `90.mini-Lite/` has been retired and is no longer maintained in this repo.
+- Treat `90_documents/` and `91.reference/` as external reference material only; never present them as the active `openBattery` implementation. The current architecture is defined by `0_System/*.md` and `openBmsClaw/`.
 
 ---
 

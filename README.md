@@ -55,7 +55,8 @@ openBattery/
 │   ├── Src/           # Application logic and drivers
 │   ├── Inc/           # Header files
 │   └── CMakeLists.txt # Main build configuration
-└── 90.mini-Lite/      # Reference hardware project behavior and models
+├── 90_documents/      # External docs, kickoff plans, reference tutorials
+└── 91.reference/      # Archived external materials & SoC selection guides
 ```
 
 ---

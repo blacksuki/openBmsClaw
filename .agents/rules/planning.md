@@ -36,8 +36,8 @@ Ensure proper distinction between hardware targets in plans:
 ---
 
 ## 4. Isolation of Reference Materials
-- `90.mini-Lite/` is strictly a reference case for learning behaviors (e.g., multi-port power limits, button state machines, NTC protection curves).
-- NEVER adopt its MCU choice, direct directory structure, or specific implementation code directly into the active `openBattery` system.
+- The former reference project `90.mini-Lite/` has been retired; behaviors like multi-port power limits, button state machines, and NTC protection curves are now defined directly in `openBmsClaw/services/`.
+- Treat `90_documents/` and `91.reference/` as external reference only. Architecture, MCU choice, and directory structure follow `0_System/*.md` and `openBmsClaw/`, never an external reference project.
 
 ---
 
