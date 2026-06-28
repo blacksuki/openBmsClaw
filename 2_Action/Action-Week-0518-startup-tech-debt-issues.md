@@ -33,6 +33,8 @@
 
 `soc_sal.h` 是面向 `app/` 和 `services/` 的 SoC 公共 API，但它直接暴露了 HAL 层头文件。这样上层 include `soc_sal.h` 时，会间接看到 MCU 外设实现细节。
 
+代码依据：`soc_sal.h:9-10` 直接 `#include "../hal/i2c/hal_i2c.h"` 与 `"../hal/exti/hal_exti.h"`；而 `app/app.c:4`、`services/power/power_service.c:2` 都 include 了 `soc_sal.h`，已经**传递性**看到 HAL 类型——泄露是当前事实，不是理论风险。
+
 ### 影响
 
 - 上层容易依赖 `hal_i2c` / `hal_exti` 类型或函数。
@@ -45,7 +47,7 @@
 
 ### 建议整改
 
-1. 新增 `drivers/soc/soc_types.h`，只放平台标准状态、端口、事件和错误码。
+1. 新增 `drivers/soc/soc_types.h`，把 `soc_sal_status_t`、`soc_port_t`、`SOC_ALARM_*` 掩码、`soc_sal_emergency_callback_t`（均不依赖 HAL）搬入。
 2. 新增 `drivers/soc/soc_api.h`，作为 `app/` / `services/` 只能 include 的公共入口。
 3. 将 HAL 相关 include 移入 `soc_sal.c` 或 `soc_transport_i2c.c`。
 4. 若需要 transport 抽象，单独建立 `soc_transport.h`，不对 `app/` 暴露。
@@ -54,6 +56,8 @@
 
 - `app/` 和 `services/` include SoC API 时，不会间接 include `hal_i2c.h` 或 `hal_exti.h`。
 - `soc_api.h` 只包含标准 C 头、`soc_types.h` 和平台领域 API。
+
+> 依赖：本 issue 是 ISSUE-002 的前置——必须先有不泄露 HAL 的 `soc_types.h`，才能定义干净的 `soc_driver_ops_t`。
 
 ---
 
@@ -70,9 +74,9 @@
 
 `soc_sal.c` 中同时包含：
 
-- demo register：`REG_SOC_BAT_VOLT_H`、`REG_SOC_CHIP_TEMP` 等。
-- 默认 I2C 地址：`0x75`。
-- 电压、电流、温度、OCP 的假定转换公式。
+- demo register：`REG_SOC_BAT_VOLT_H`、`REG_SOC_CHIP_TEMP` 等（`soc_sal.c:6-15`）。
+- 默认 I2C 地址：`0x75`（`soc_sal.c:17`）。
+- 电压、电流、温度、OCP 的假定转换公式（`soc_sal.c:130` `*5/4`、`:154` `*10`、`:178` `raw-50`、`:206` `/500`、`:229` `*1000/5`）。
 - SAL 初始化、bus recovery、事件轮询和上层 API。
 
 ### 影响
@@ -89,17 +93,21 @@
 
 1. 保留公共能力 API：`soc_get_voltage`、`soc_get_temperature`、`soc_set_ocp`、`soc_poll_events`。
 2. 将 demo register 移入 `drivers/soc/vendor/demo_soc.c` 或 `vendor/injoinic_ip53xx.c`。
-3. 新增 adapter 接口，例如：
+3. 新增 adapter 接口。签名按当前 `soc_sal.h` 实际 API + `00.tech_architecure.md §5.3` 单位口径（mV/mA/mW、功率 `uint32`）统一：
 
 ```c
 typedef struct {
-    soc_status_t (*init)(void);
-    soc_status_t (*get_voltage_mv)(uint16_t port, uint16_t *voltage_mv);
-    soc_status_t (*get_temperature_c)(int16_t *temperature_c);
-    soc_status_t (*set_ocp_limit)(uint16_t port, uint16_t current_ma);
-    soc_status_t (*poll_events)(soc_event_t *events, uint8_t max_count);
+    soc_sal_status_t (*init)(uint8_t i2c_addr);
+    soc_sal_status_t (*get_voltage_mv)(uint32_t *voltage_mv);
+    soc_sal_status_t (*get_current_ma)(int32_t *current_ma);
+    soc_sal_status_t (*get_temperature_c)(int16_t *temp_celsius);
+    soc_sal_status_t (*set_ocp_ma)(soc_port_t port, uint32_t limit_ma);
+    soc_sal_status_t (*set_port_power_mw)(soc_port_t port, uint32_t power_mw);
+    soc_sal_status_t (*poll_events)(uint32_t *event_mask);
 } soc_driver_ops_t;
 ```
+
+> 注意：当前 `soc_set_port_power` 实参仍是 `uint16_t max_power_w`（`soc_sal.c:226`），adapter 化时一并收敛为 `power_mw`（uint32），与 §5.3 口径一致；否则又是一处单位双真相。
 
 4. `soc_manager.c` 只负责选择当前 adapter 和转发调用。
 
@@ -122,7 +130,7 @@ typedef struct {
 
 ### 现象
 
-`app_init()` 在 `APP_ENABLE_POWER_SERVICE` 开启时，会打印测试日志并直接调用 `board_soc_int_sim_trigger()`。该函数声明在 `soc_sal.h`，实现位于 `soc_sal.c`，实际调用 `hal_exti_software_trigger()`。
+`app_init()` 在 `APP_ENABLE_POWER_SERVICE` 开启时，会打印测试日志并直接调用 `board_soc_int_sim_trigger()`（`app/app.c:43-48`）。该函数声明在 `soc_sal.h:114`，实现位于 `soc_sal.c:259`，实际调用 `hal_exti_software_trigger()`。
 
 ### 影响
 
@@ -136,8 +144,8 @@ typedef struct {
 
 ### 建议整改
 
-1. 新增 `services/bringup/` 或 `tests/selftest/` 下的自测入口。
-2. 将 `board_soc_int_sim_trigger()` 改名为更明确的 `soc_int_selftest_trigger()` 或 `bringup_soc_int_selftest_run()`。
+1. 复用现成的 `services/bringup/bringup_service.c`：它已是带 `BRINGUP_STAGE_ADC/I2C` 的阶段机（`bringup_service.c:96-119`），新增一个 `BRINGUP_STAGE_SOC_INT_SELFTEST` 即可承接，无需另起 `tests/`。
+2. 将 `board_soc_int_sim_trigger()` 改名为 `bringup_soc_int_selftest()`，并把声明从 `soc_sal.h` 移除。
 3. 使用独立宏控制，例如 `CONFIG_ENABLE_BRINGUP_SELFTEST`，默认生产 profile 关闭。
 4. `app/` 只调度 bring-up service，不直接触发底层自测 hook。
 
@@ -162,6 +170,8 @@ typedef struct {
 
 当前 `APP_ENABLE_POWER_SERVICE` 为 `1`，但 `FEATURE_ENABLE_POWER` 为 `0`。这会造成新成员难以判断 power 模块到底是启用、裁剪、还是仅启用测试路径。
 
+代码依据：grep 确认 `FEATURE_ENABLE_POWER/BMS/PROTOCOL` 在 `services/`、`app/` 中**零引用**，构建路径只认 `app.c` 里的 `APP_ENABLE_*`（`app.c:21-32`、`:43-48`）。所以这不只是"两处状态不一致"，而是 `FEATURE_*` 当前是**纯装饰性死宏**、完全无效。
+
 ### 影响
 
 - 后续 F030 profile 裁剪时，可能出现编译启用和功能声明不一致。
@@ -174,12 +184,13 @@ typedef struct {
 
 ### 建议整改
 
-1. 明确三类开关层级：
+1. 先对死宏二选一：要么把 `FEATURE_ENABLE_POWER` 真正接进 `app.c`（`#if APP_ENABLE_POWER_SERVICE && FEATURE_ENABLE_POWER`），要么直接删除这些零引用宏，避免装饰性配置继续误导。
+2. 明确三类开关层级：
    - `PROFILE_*`：选择构建目标，如 `PROFILE_F103_BRINGUP`、`PROFILE_F030_MIN_PRODUCT`。
    - `FEATURE_*`：产品能力是否存在。
    - `APP_ENABLE_*`：当前 app 是否调度该服务。
-2. 对 startup 阶段增加注释或宏名，例如 `APP_ENABLE_POWER_EMERGENCY_TEST`。
-3. 避免 `FEATURE_ENABLE_POWER=0` 时仍默认运行完整 power service。
+3. 将 `APP_ENABLE_POWER_SERVICE` 改名 `APP_ENABLE_POWER_EMERGENCY_TEST`，避免被当成"功率分配业务已启用"。
+4. 避免 `FEATURE_ENABLE_POWER=0` 时仍默认运行完整 power service。
 
 ### 退出条件
 
@@ -198,7 +209,9 @@ typedef struct {
 
 ### 现象
 
-`power_service_handle_emergency_stop()` 直接调用 `board_status_led_set(false)`；`power_service_process()` 在 emergency lock 状态下调用 `board_status_led_toggle()` 和 `board_busy_wait(100000u)`。
+`power_service_handle_emergency_stop()` 直接调用 `board_status_led_set(false)`（`power_service.c:36`）；`power_service_process()` 在 emergency lock 状态下调用 `board_status_led_toggle()` 和 `board_busy_wait(100000u)`（`power_service.c:92-93`）。
+
+同类债务还在 `ui_service.c:17`（`board_busy_wait(1600000u)`）。两者同处一个 `app_run` 循环（`app.c:62,68`），emergency 时每圈被 ui 的 1.6M 阻塞拖累，"高速闪烁"实际快不起来——所以本 issue 的整改要 power 和 ui **一起做**。
 
 ### 影响
 
@@ -212,14 +225,15 @@ typedef struct {
 
 ### 建议整改
 
+0. **前置**：当前 `board.h` 只有 `board_busy_wait()`，**没有任何 tick/时间基准**（全仓 grep 无 `get_tick`/SysTick）。必须先新增非阻塞时间基准，例如 `uint32_t board_get_tick_ms(void)`（SysTick），否则下面第 2 步无从落地。
 1. 将 emergency 状态发布为系统事件，由 UI service 或 indicator service 负责显示。
-2. 使用 tick / timer 驱动 LED 闪烁，不在 service 中 busy wait。
+2. 使用 `board_get_tick_ms()` 做差值翻转 LED，不在 service 中 busy wait；`power_service.c:93` 与 `ui_service.c:17` 两处一并替换。
 3. power service 只维护安全状态和策略，不直接绑定某个板载 LED。
 
 ### 退出条件
 
 - `services/power` 不直接调用 `board_status_led_*()`。
-- emergency 闪烁不阻塞主循环。
+- emergency 闪烁不阻塞主循环（`board_busy_wait` 在 `power` 和 `ui` 中均被移除）。
 
 ---
 
@@ -234,7 +248,7 @@ typedef struct {
 
 ### 现象
 
-当前 emergency callback 会锁定状态并关闭状态 LED，用注释表达“模拟切断物理开关”。真实 SoC INT、功率路径使能脚、限流动作和故障寄存器尚未上板验证。
+当前 emergency callback 会锁定状态并关闭状态 LED，用注释表达“模拟切断物理开关”（`power_service.c:33-36`）。且中断入口 `soc_sal_exti_hardware_handler()` **恒投递 `SOC_ALARM_SYS_ERROR`**（`soc_sal.c:30`，与软件自测 `board_soc_int_sim_trigger` 对应），真实故障类型要等慢路径 `soc_poll_events()` 再解析（`power_service.c:65`）。真实 SoC INT、功率路径使能脚、限流动作和故障寄存器尚未上板验证。
 
 ### 影响
 
@@ -262,18 +276,22 @@ typedef struct {
 
 ## 2. 后续清理顺序建议
 
-建议按以下顺序清理，避免一次性重构过大：
+根据代码核实，原顺序需两处修正：① ISSUE-005 缺少时间基准前置（当前无 tick）；② ISSUE-001（拆头）应排在 ISSUE-002（adapter）之前。修正后顺序：
 
-1. **先收敛配置双真相**：明确 startup profile 与 power emergency test 的关系。
-2. **隔离 self-test hook**：把 `app/` 中的软件 EXTI 触发移到 bring-up/self-test。
-3. **清理 SAL 公共头文件**：不再暴露 HAL 头。
-4. **拆分 SoC adapter**：真实 SoC 接入前先准备 `soc_api.h`、`soc_types.h` 和 demo adapter。
-5. **替换 busy wait UI**：用 UI/indicator service 承担 emergency 闪烁。
-6. **完成真实硬件验证**：SoC INT、故障寄存器、限流/关断动作、I2C 恢复。
+| 序 | 动作 | 对应 issue | 依赖 |
+| --- | --- | --- | --- |
+| 1 | 收敛配置：删除或接入 `FEATURE_*` 死宏 + 建立 profile | ISSUE-004 | 无 |
+| 2 | 隔离 self-test hook：软件 EXTI 触发移入 `bringup_service` | ISSUE-003 | 无 |
+| 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 | 无 |
+| 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 | 依赖 3 |
+| 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 | 无 |
+| 6 | SoC adapter 化：签名对齐 `00.tech_architecure.md §5.3` 口径 | ISSUE-002 | 依赖 5 |
+| 7 | 真实硬件验证：SoC INT、故障寄存器、限流/关断、I2C 恢复 | ISSUE-006 | 依赖评估板 |
 
 ## 3. 当前验证状态
 
 - 本文为技术债记录，不代表已经完成整改。
+- 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码），未运行编译或上板测试。
 - 本轮未运行新的编译或上板测试。
 - 之前已知构建结果为：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。
 - 真实 SoC 通信、真实 INT 引脚、功率限流和故障注入仍未完成硬件验证。
