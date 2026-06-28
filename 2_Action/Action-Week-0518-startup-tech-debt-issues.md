@@ -191,7 +191,7 @@ typedef struct {
 
 ## ISSUE-004：配置存在双真相，feature 与 app 开关含义未收敛
 
-- **状态**：Open
+- **状态**：Resolved（2026-06-28 整改并通过构建验证，见文末「整改记录」）
 - **优先级**：Medium
 - **类型**：配置治理 / 可裁剪性
 - **代码位置**：
@@ -229,6 +229,22 @@ typedef struct {
 
 - 每个功能只有一个权威启用来源。
 - `F103_BRINGUP` 与 `F030_MIN_PRODUCT` profile 能清楚说明哪些模块会编译、哪些模块会运行。
+
+### 整改记录（2026-06-28）
+
+实际改动（分支 `fix/issue-004-config-profiles`）：
+
+- 新增 `config/profile_config.h`：以单个 `PROFILE_*`（默认 `PROFILE_F103_BRINGUP`，备 `PROFILE_F030_MIN_PRODUCT`）作为配置唯一权威来源，并加 `#error` 保证有且仅有一个被定义。
+- `config/feature_config.h`、`config/app_config.h` 改为按 PROFILE 派生 `FEATURE_*` / `APP_ENABLE_*`：二者同源，不可能再出现含义不一致的双真相。
+- 死宏处理：`FEATURE_ENABLE_POWER/BMS/PROTOCOL` 由 `app.c` 真正接入（`#if APP_ENABLE_* && FEATURE_ENABLE_*`），不再零引用；`FEATURE_ENABLE_STATUS_LED/UART_LOG`（与 `board_has_*()` 能力查询重复的死宏）删除。
+- 重命名 `APP_ENABLE_POWER_SERVICE` → `APP_ENABLE_POWER_EMERGENCY_TEST`，反映其当前仅承担紧急回调 + ISSUE-003 自测链路。
+- `sys_config.h` 在 board/feature/app 之前先 include `profile_config.h`。
+
+退出条件验证：
+
+- 单一来源：`app/app.c` 现读取 `FEATURE_ENABLE_POWER/BMS/PROTOCOL`（行 17/20/23/51/54/57），死宏消除；`APP_ENABLE_POWER_SERVICE` 全仓无残留；`FEATURE_ENABLE_STATUS_LED/UART_LOG` 无引用。
+- profile 可切换且都编译通过：F103（默认）`cmake --build --preset Debug` 退出码 0、0 warning、`RAM 4184 B / FLASH 31420 B`（与整改前一致，power 仍链接运行，ISSUE-003 自测链路保留）；临时切到 `PROFILE_F030_MIN_PRODUCT` 亦构建通过（退出码 0、0 warning，未调度服务被链接器回收，体积显著下降），验证后已切回 F103。
+- 两条退出条件均满足。
 
 ---
 
@@ -313,7 +329,7 @@ typedef struct {
 
 | 序 | 动作 | 对应 issue | 依赖 |
 | --- | --- | --- | --- |
-| 1 | 收敛配置：删除或接入 `FEATURE_*` 死宏 + 建立 profile | ISSUE-004 | 无 |
+| 1 | 收敛配置：删除或接入 `FEATURE_*` 死宏 + 建立 profile | ISSUE-004 ✅ 已完成（2026-06-28） | 无 |
 | 2 | 隔离 self-test hook：软件 EXTI 触发移入 `bringup_service` | ISSUE-003 ✅ 已完成（2026-06-28） | 无 |
 | 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 | 无 |
 | 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 | 依赖 3 |
@@ -323,10 +339,11 @@ typedef struct {
 
 ## 3. 当前验证状态
 
-- 本文为技术债记录，ISSUE-001、ISSUE-003 已整改，其余 4 项仍 Open。
+- 本文为技术债记录，ISSUE-001、ISSUE-003、ISSUE-004 已整改，其余 3 项仍 Open。
 - 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码）。
 - 2026-06-28 ISSUE-001 已整改并通过 `arm-none-eabi-gcc` 构建验证（Debug，退出码 0，0 warning），`ninja -t deps` 确认 `app/`、`services/` 不再间接包含 HAL；未上板（编译期边界问题）。
 - 2026-06-28 ISSUE-003 已整改并通过构建验证（Debug，退出码 0，0 warning，FLASH 31420 B），grep 确认 `app/` 无自测 hook、软件 EXTI 触发仅在 bring-up 路径；未上板。
+- 2026-06-28 ISSUE-004 已整改并通过构建验证：新增 `profile_config.h` 单一来源，F103 与 F030 两 profile 均 `cmake Debug` 退出码 0、0 warning；死宏消除、`APP_ENABLE_POWER_SERVICE` 改名完成。
 - 本轮未运行新的编译或上板测试。
 - 之前已知构建结果为：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。
 - 真实 SoC 通信、真实 INT 引脚、功率限流和故障注入仍未完成硬件验证。

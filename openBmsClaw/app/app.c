@@ -14,13 +14,13 @@ void app_init(void)
 #if APP_ENABLE_TEMPERATURE_ALARM_SAMPLE
     temperature_alarm_sample_init();
 #else
-#if APP_ENABLE_BMS_SERVICE
+#if APP_ENABLE_BMS_SERVICE && FEATURE_ENABLE_BMS
     bms_service_init();
 #endif
-#if APP_ENABLE_POWER_SERVICE
+#if APP_ENABLE_POWER_EMERGENCY_TEST && FEATURE_ENABLE_POWER
     power_service_init();
 #endif
-#if APP_ENABLE_PROTOCOL_SERVICE
+#if APP_ENABLE_PROTOCOL_SERVICE && FEATURE_ENABLE_PROTOCOL
     protocol_service_init();
 #endif
 #if APP_ENABLE_UI_SERVICE
@@ -48,13 +48,13 @@ void app_run(void)
 #if APP_ENABLE_BRINGUP_SERVICE
     bringup_service_process();
 #endif
-#if APP_ENABLE_BMS_SERVICE
+#if APP_ENABLE_BMS_SERVICE && FEATURE_ENABLE_BMS
     bms_service_process();
 #endif
-#if APP_ENABLE_POWER_SERVICE
+#if APP_ENABLE_POWER_EMERGENCY_TEST && FEATURE_ENABLE_POWER
     power_service_process();
 #endif
-#if APP_ENABLE_PROTOCOL_SERVICE
+#if APP_ENABLE_PROTOCOL_SERVICE && FEATURE_ENABLE_PROTOCOL
     protocol_service_process();
 #endif
 #if APP_ENABLE_UI_SERVICE
