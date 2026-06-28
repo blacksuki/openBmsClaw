@@ -5,7 +5,7 @@ signed_off_by: black suki
 signed_off_date: 2026-06-27
 sources:
   - "[1] 90_documents/日本市场移动电源平台项目启动方案.(docx/pdf)"
-  - "[2] 0_System/00.tech_archture.md (核对日 2026-05-18)"
+  - "[2] 0_System/00.tech_architecure.md (核对日 2026-06-28)"
   - "[3] 91.reference/injoinic_soc_selection_guide_2026.md"
 ---
 
