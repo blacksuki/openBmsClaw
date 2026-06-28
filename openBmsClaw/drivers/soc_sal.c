@@ -1,5 +1,9 @@
 #include "soc_sal.h"
+
 #include "../board/board.h"
+#include "../config/sys_config.h"
+#include "../hal/exti/hal_exti.h"
+#include "../hal/i2c/hal_i2c.h"
 #include <stdio.h>
 
 /* 基线 SoC (例如英集芯系列) 通用演示寄存器地址 */

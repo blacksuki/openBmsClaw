@@ -1,5 +1,5 @@
 #include "services/power/power_service.h"
-#include "drivers/soc_sal.h"
+#include "drivers/soc/soc_api.h"
 #include "board/board.h"
 #include "config/sys_config.h"
 #include <stdio.h>

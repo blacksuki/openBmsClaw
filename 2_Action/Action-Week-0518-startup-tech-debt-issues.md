@@ -22,7 +22,7 @@
 
 ## ISSUE-001：SoC SAL 公共头文件泄露 HAL 依赖
 
-- **状态**：Open
+- **状态**：Resolved（2026-06-28 整改并通过构建验证，见文末「整改记录」）
 - **优先级**：High
 - **类型**：分层边界 / 可迁移性
 - **代码位置**：
@@ -58,6 +58,22 @@
 - `soc_api.h` 只包含标准 C 头、`soc_types.h` 和平台领域 API。
 
 > 依赖：本 issue 是 ISSUE-002 的前置——必须先有不泄露 HAL 的 `soc_types.h`，才能定义干净的 `soc_driver_ops_t`。
+
+### 整改记录（2026-06-28）
+
+实际改动（分支 `fix/issue-001-soc-sal-hal-leak`）：
+
+- 新增 `drivers/soc/soc_types.h`：仅 `<stdint.h>` + 平台类型（`soc_sal_status_t`、`soc_port_t`、`SOC_ALARM_*`、`soc_sal_emergency_callback_t`），不含任何 HAL。
+- 新增 `drivers/soc/soc_api.h`：仅 `<stdbool.h>`/`<stdint.h>` + `soc_types.h` + 领域 API 声明，不含 HAL。
+- `drivers/soc_sal.h` 改为薄入口：`#include "soc/soc_api.h"`，移除 `hal_i2c.h`/`hal_exti.h` 与类型/API 定义；仅保留自测 hook `board_soc_int_sim_trigger()` 声明（其迁移归 ISSUE-003，本轮不动）。
+- `drivers/soc_sal.c`：补回直接 include `../config/sys_config.h`、`../hal/i2c/hal_i2c.h`、`../hal/exti/hal_exti.h`（HAL 在 `.c` 内使用，符合 `00.tech §4.2`）。
+- `services/power/power_service.c`：include 由 `drivers/soc_sal.h` 改为 `drivers/soc/soc_api.h`。
+
+退出条件验证：
+
+- 构建：`cmake --preset Debug && cmake --build --preset Debug` → 退出码 0，`-Wall -Wextra -Wpedantic` 下 0 warning；`RAM 4184 B / FLASH 31348 B` 与整改前一致（纯重构，无体积变化）。
+- 依赖树：`ninja -t deps` 证明 `app/app.c.obj`、`services/power/power_service.c.obj` 的依赖中**不含** `hal_i2c.h`/`hal_exti.h`；`drivers/soc_sal.c.obj` 仍含 HAL（driver 层允许）。
+- 两条退出条件均满足。未上板测试（本 issue 为编译期分层边界问题，不涉及硬件行为）。
 
 ---
 
@@ -284,14 +300,15 @@ typedef struct {
 | 2 | 隔离 self-test hook：软件 EXTI 触发移入 `bringup_service` | ISSUE-003 | 无 |
 | 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 | 无 |
 | 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 | 依赖 3 |
-| 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 | 无 |
+| 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 ✅ 已完成（2026-06-28） | 无 |
 | 6 | SoC adapter 化：签名对齐 `00.tech_architecure.md §5.3` 口径 | ISSUE-002 | 依赖 5 |
 | 7 | 真实硬件验证：SoC INT、故障寄存器、限流/关断、I2C 恢复 | ISSUE-006 | 依赖评估板 |
 
 ## 3. 当前验证状态
 
-- 本文为技术债记录，不代表已经完成整改。
-- 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码），未运行编译或上板测试。
+- 本文为技术债记录，ISSUE-001 已整改，其余 5 项仍 Open。
+- 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码）。
+- 2026-06-28 ISSUE-001 已整改并通过 `arm-none-eabi-gcc` 构建验证（Debug，退出码 0，0 warning），`ninja -t deps` 确认 `app/`、`services/` 不再间接包含 HAL；未上板（编译期边界问题）。
 - 本轮未运行新的编译或上板测试。
 - 之前已知构建结果为：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。
 - 真实 SoC 通信、真实 INT 引脚、功率限流和故障注入仍未完成硬件验证。
