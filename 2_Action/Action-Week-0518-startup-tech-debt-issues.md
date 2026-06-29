@@ -79,7 +79,7 @@
 
 ## ISSUE-002：SoC SAL 仍是单文件 demo 实现，尚未 vendor adapter 化
 
-- **状态**：Open
+- **状态**：Resolved（2026-06-29 整改并通过构建验证，见文末「整改记录」）
 - **优先级**：High
 - **类型**：SoC 解耦 / 多厂商适配
 - **代码位置**：
@@ -131,6 +131,23 @@ typedef struct {
 
 - vendor 寄存器表不再出现在平台公共 SAL 文件中。
 - 新增第二颗 SoC 时，不需要修改 `app/` 和 `services/`。
+
+### 整改记录（2026-06-29）
+
+实际改动（分支 `fix/issue-002-soc-adapter`）：
+
+- 新增 `drivers/soc/soc_driver.h`：`soc_driver_ops_t` 适配器函数表（mV/mA/mW 口径，§5.3）。
+- 新增 `drivers/soc/vendor/demo_soc.{h,c}`：demo/基线适配器，**唯一**持有 `REG_SOC_*`、I2C 地址 `0x75` 与转换公式，实现 ops 并暴露 `demo_soc_get_ops()`。
+- 新增 `drivers/soc/soc_manager.c`：实现公共 `soc_api.h`，转发给当前适配器；负责适配器选择、`hal_i2c` 传输初始化、总线自愈、EXTI 高速通道与紧急回调、`soc_sal_int_selftest_trigger`，以及公共 API 瓦特 → 适配器毫瓦的口径转换。
+- 删除 `drivers/soc_sal.c`（内容拆入 manager + 适配器）；`CMakeLists.txt` 用 `soc/soc_manager.c` + `soc/vendor/demo_soc.c` 替换原 `soc_sal.c`。
+- 公共头 `soc_api.h`、`soc_sal.h` 保持不变。
+
+退出条件验证：
+
+- `REG_SOC_*` 仅出现在 `vendor/demo_soc.c`，平台公共/manager 文件中已无 vendor 寄存器表。
+- `app/`、`services/`、`soc_api.h` 本次零改动（`git diff` 确认）→ 新增第二颗 SoC 只需加一个 vendor 适配器并在 manager 选择，不动上层。
+- 构建：`cmake --build --preset Debug` 退出码 0、0 warning；`RAM 4200 B / FLASH 32708 B`（较前 +8 B / +1160 B，来自适配器函数表与去内联开销）。
+- 两条退出条件均满足。未上板（`soc_sal_init` 仍未被调用，与整改前一致，属 ISSUE-006 范围）。
 
 ---
 
@@ -351,17 +368,18 @@ typedef struct {
 | 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 ✅ 已完成（2026-06-28） | 无 |
 | 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 ✅ 已完成（2026-06-28） | 依赖 3 |
 | 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 ✅ 已完成（2026-06-28） | 无 |
-| 6 | SoC adapter 化：签名对齐 `00.tech_architecure.md §5.3` 口径 | ISSUE-002 | 依赖 5 |
+| 6 | SoC adapter 化：签名对齐 `00.tech_architecure.md §5.3` 口径 | ISSUE-002 ✅ 已完成（2026-06-29） | 依赖 5 |
 | 7 | 真实硬件验证：SoC INT、故障寄存器、限流/关断、I2C 恢复 | ISSUE-006 | 依赖评估板 |
 
 ## 3. 当前验证状态
 
-- 本文为技术债记录，ISSUE-001、ISSUE-003、ISSUE-004、ISSUE-005 已整改，其余 2 项仍 Open。
+- 本文为技术债记录，ISSUE-001~005 已整改，仅剩 ISSUE-006（真实硬件验证，依赖评估板）Open。
 - 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码）。
 - 2026-06-28 ISSUE-001 已整改并通过 `arm-none-eabi-gcc` 构建验证（Debug，退出码 0，0 warning），`ninja -t deps` 确认 `app/`、`services/` 不再间接包含 HAL；未上板（编译期边界问题）。
 - 2026-06-28 ISSUE-003 已整改并通过构建验证（Debug，退出码 0，0 warning，FLASH 31420 B），grep 确认 `app/` 无自测 hook、软件 EXTI 触发仅在 bring-up 路径；未上板。
 - 2026-06-28 ISSUE-004 已整改并通过构建验证：新增 `profile_config.h` 单一来源，F103 与 F030 两 profile 均 `cmake Debug` 退出码 0、0 warning；死宏消除、`APP_ENABLE_POWER_SERVICE` 改名完成。
 - 2026-06-28 ISSUE-005 已整改并通过构建验证：新增 1ms SysTick 时基（`board_get_tick_ms`），`power` 不再驱动 LED、`power`/`ui` 的 `board_busy_wait` 移除，UI 改 tick 驱动（退出码 0、0 warning，RAM 4192 B / FLASH 31548 B）；未上板。
+- 2026-06-29 ISSUE-002 已整改并通过构建验证：拆出 `soc_driver.h` + `vendor/demo_soc.c`（唯一持寄存器表）+ `soc_manager.c`，删除 `soc_sal.c`；`REG_SOC_*` 仅在 vendor，`app/`/`services/`/`soc_api.h` 零改动（退出码 0、0 warning，RAM 4200 B / FLASH 32708 B）；未上板。
 - 本轮未运行新的编译或上板测试。
 - 之前已知构建结果为：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。
 - 真实 SoC 通信、真实 INT 引脚、功率限流和故障注入仍未完成硬件验证。
