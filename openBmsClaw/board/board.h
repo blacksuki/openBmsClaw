@@ -8,6 +8,7 @@ void board_init(void);
 void board_status_led_set(bool on);
 void board_status_led_toggle(void);
 void board_busy_wait(volatile uint32_t cycles);
+uint32_t board_get_tick_ms(void);
 void board_uart_write_string(const char *text);
 void board_adc_probe_init(void);
 uint16_t board_adc_probe_read_once(void);

@@ -52,6 +52,19 @@
 #define USART_CR1_TE (1u << 3)
 #define USART_CR1_UE (1u << 13)
 
+/* SysTick (Cortex-M3 core peripheral) — 1ms 时间基准 */
+#define SYSTICK_CSR (*(volatile uint32_t *)0xE000E010u)
+#define SYSTICK_RVR (*(volatile uint32_t *)0xE000E014u)
+#define SYSTICK_CVR (*(volatile uint32_t *)0xE000E018u)
+#define SYSTICK_CSR_ENABLE (1u << 0)
+#define SYSTICK_CSR_TICKINT (1u << 1)
+#define SYSTICK_CSR_CLKSOURCE (1u << 2)
+
+/* 复位默认时钟为 HSI 8 MHz (见 board_uart_init 说明，无 PLL 配置) */
+#define BOARD_CORE_CLOCK_HZ 8000000u
+
+static volatile uint32_t s_tick_ms = 0u;
+
 static void board_uart_init(void) {
   /*
    * This minimal project currently boots without an explicit SystemInit()
@@ -62,12 +75,20 @@ static void board_uart_init(void) {
   USART1_CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
 
+static void board_systick_init(void) {
+  /* 1ms 周期：reload = HCLK/1000 - 1，时钟源选处理器时钟，开中断并使能 */
+  SYSTICK_RVR = (BOARD_CORE_CLOCK_HZ / 1000u) - 1u;
+  SYSTICK_CVR = 0u;
+  SYSTICK_CSR = SYSTICK_CSR_CLKSOURCE | SYSTICK_CSR_TICKINT | SYSTICK_CSR_ENABLE;
+}
+
 void board_init(void) {
   RCC_APB2ENR |= RCC_APB2ENR_AFIOEN | RCC_APB2ENR_IOPAEN | RCC_APB2ENR_USART1EN;
   GPIOA_CRL = (GPIOA_CRL & ~STATUS_LED_CRL_MASK) | STATUS_LED_OUTPUT_PP_2MHZ;
   GPIOA_CRH = (GPIOA_CRH & ~(UART_TX_CRH_MASK | UART_RX_CRH_MASK)) |
               UART_TX_AF_PP_50MHZ | UART_RX_INPUT_FLOATING;
   board_uart_init();
+  board_systick_init();
   board_status_led_set(false);
 }
 
@@ -91,6 +112,11 @@ void board_busy_wait(volatile uint32_t cycles) {
     __asm volatile("nop");
   }
 }
+
+/* SysTick 1ms 中断服务程序，覆盖 startup 中的弱定义 */
+void SysTick_Handler(void) { s_tick_ms++; }
+
+uint32_t board_get_tick_ms(void) { return s_tick_ms; }
 
 void board_uart_write_string(const char *text) {
   if (text == 0) {

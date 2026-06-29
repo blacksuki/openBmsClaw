@@ -250,7 +250,7 @@ typedef struct {
 
 ## ISSUE-005：`services/power` 直接操作 board LED 和 busy wait
 
-- **状态**：Open
+- **状态**：Resolved（2026-06-28 整改并通过构建验证，见文末「整改记录」）
 - **优先级**：Medium
 - **类型**：服务层与板级耦合 / 响应性
 - **代码位置**：
@@ -283,6 +283,23 @@ typedef struct {
 
 - `services/power` 不直接调用 `board_status_led_*()`。
 - emergency 闪烁不阻塞主循环（`board_busy_wait` 在 `power` 和 `ui` 中均被移除）。
+
+### 整改记录（2026-06-28）
+
+实际改动（分支 `fix/issue-005-tickbase-ui`）：
+
+- 前置时间基准：`board.c` 新增 1ms SysTick（HSI 8 MHz，reload=7999，CLKSOURCE=处理器时钟、TICKINT 使能），强定义 `SysTick_Handler` 覆盖 startup 弱向量，`board_init()` 调用 `board_systick_init()`；`board.h` 暴露 `uint32_t board_get_tick_ms(void)`。
+- `power_service`：快路径回调只自锁状态，删除 `board_status_led_set(false)`；`process()` 紧急分支保留一次性诊断，删除 `board_status_led_toggle()` 与 `board_busy_wait(100000)`，power 不再驱动 LED。
+- `ui_service`：改为 tick 驱动非阻塞翻转——正常 500ms 心跳、紧急 100ms 快闪（在 `APP_ENABLE_POWER_EMERGENCY_TEST && FEATURE_ENABLE_POWER` 下读取 `power_service_get_state()`），删除 `board_busy_wait(1600000)`。
+
+退出条件验证：
+
+- 构建：`cmake --build --preset Debug` 退出码 0、0 warning；`RAM 4192 B / FLASH 31548 B`（较前 +8 B / +128 B，来自时基计数与 SysTick 逻辑）。
+- grep：`services/power` 无 `board_status_led_*` 调用；`board_busy_wait` 在 `power` 与 `ui` 中均已移除。
+- 符号：`SysTick_Handler`（强定义，地址独立于 `Default_Handler`）与 `board_get_tick_ms` 均在 elf 中。
+- 两条退出条件均满足。
+
+> 未上板：1ms 时基由 reload = HCLK/1000 - 1 计算保证、闪烁为非阻塞 tick 差值；实际时序与 LED 行为待上板确认。`ui→power` 的状态查询是当前最小耦合，后续可演进为事件/indicator 总线。
 
 ---
 
@@ -331,19 +348,20 @@ typedef struct {
 | --- | --- | --- | --- |
 | 1 | 收敛配置：删除或接入 `FEATURE_*` 死宏 + 建立 profile | ISSUE-004 ✅ 已完成（2026-06-28） | 无 |
 | 2 | 隔离 self-test hook：软件 EXTI 触发移入 `bringup_service` | ISSUE-003 ✅ 已完成（2026-06-28） | 无 |
-| 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 | 无 |
-| 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 | 依赖 3 |
+| 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 ✅ 已完成（2026-06-28） | 无 |
+| 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 ✅ 已完成（2026-06-28） | 依赖 3 |
 | 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 ✅ 已完成（2026-06-28） | 无 |
 | 6 | SoC adapter 化：签名对齐 `00.tech_architecure.md §5.3` 口径 | ISSUE-002 | 依赖 5 |
 | 7 | 真实硬件验证：SoC INT、故障寄存器、限流/关断、I2C 恢复 | ISSUE-006 | 依赖评估板 |
 
 ## 3. 当前验证状态
 
-- 本文为技术债记录，ISSUE-001、ISSUE-003、ISSUE-004 已整改，其余 3 项仍 Open。
+- 本文为技术债记录，ISSUE-001、ISSUE-003、ISSUE-004、ISSUE-005 已整改，其余 2 项仍 Open。
 - 2026-06-28 已对 6 个 issue 做**静态代码核实**（按 `file:line` 比对当前源码）。
 - 2026-06-28 ISSUE-001 已整改并通过 `arm-none-eabi-gcc` 构建验证（Debug，退出码 0，0 warning），`ninja -t deps` 确认 `app/`、`services/` 不再间接包含 HAL；未上板（编译期边界问题）。
 - 2026-06-28 ISSUE-003 已整改并通过构建验证（Debug，退出码 0，0 warning，FLASH 31420 B），grep 确认 `app/` 无自测 hook、软件 EXTI 触发仅在 bring-up 路径；未上板。
 - 2026-06-28 ISSUE-004 已整改并通过构建验证：新增 `profile_config.h` 单一来源，F103 与 F030 两 profile 均 `cmake Debug` 退出码 0、0 warning；死宏消除、`APP_ENABLE_POWER_SERVICE` 改名完成。
+- 2026-06-28 ISSUE-005 已整改并通过构建验证：新增 1ms SysTick 时基（`board_get_tick_ms`），`power` 不再驱动 LED、`power`/`ui` 的 `board_busy_wait` 移除，UI 改 tick 驱动（退出码 0、0 warning，RAM 4192 B / FLASH 31548 B）；未上板。
 - 本轮未运行新的编译或上板测试。
 - 之前已知构建结果为：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。
 - 真实 SoC 通信、真实 INT 引脚、功率限流和故障注入仍未完成硬件验证。

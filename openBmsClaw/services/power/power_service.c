@@ -30,10 +30,10 @@ void power_service_handle_emergency_stop(uint32_t alarm_mask) {
   s_power_state = POWER_STATE_EMERGENCY_LOCK;
   s_emergency_alarm_mask = alarm_mask;
 
-  /* 2. 模拟切断物理开关 GPIO (直接修改 ODR 寄存器拉低使能，微秒级切断物理通路)
-   * 在测试板上，我们直接熄灭 Status LED 表现自锁切断，或控制板载继电器。
+  /* 2. 快路径只做状态自锁，不触碰板载 LED / 不做慢操作。
+   *    紧急状态的可视化 (LED 闪烁) 改由 UI 服务在主循环按 tick 表现 (见 ISSUE-005)。
+   *    真实功率通路切断由 SoC / 硬件保护承担 (见 ISSUE-006)。
    */
-  board_status_led_set(false);
 }
 
 power_state_t power_service_get_state(void) {
@@ -88,8 +88,6 @@ void power_service_process(void) {
       }
     }
 
-    /* 紧急警告 UI 表现：高速闪烁 LED 以警示危险 */
-    board_status_led_toggle();
-    board_busy_wait(100000u); /* 高频闪烁 */
+    /* 紧急状态的可视化由 UI 服务负责 (tick 驱动高速闪烁)，此处不阻塞主循环。 */
   }
 }
