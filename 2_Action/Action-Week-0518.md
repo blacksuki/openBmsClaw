@@ -1,17 +1,17 @@
 # openBattery 执行记录与状态追踪 (Week-0518)
 
 > 创建时间：2026-05-18
-> 最新更新时间：2026-06-27
+> 最新更新时间：2026-07-01
 
 本文档用于完整记录本周（Week-0518）围绕“打通 MCU 与高集成度 SoC 双向通信基线”总目标的具体行动落实情况。本周严格遵循“脑体协同、资源受限（F103 64KB）裁剪、防 I2C 死锁”的开发纪律。
 
 ---
 
 ## 1. 总体进度摘要 (Summary)
-- **当期进展**：已完成 **Day 1 至 Day 4 的代码侧核心工作**，建立了 `config/` 系统配置基线，拉起底层带防死锁自愈的 `hal_i2c` 驱动，在 `drivers/` 下成功构建了跨 SoC 厂商的标准抽象转译层 (SAL)，并补齐了 SoC 紧急告警高速通道的代码链路。
+- **当期进展**：已完成 F103 bring-up 阶段的基础分层、`hal_i2c` 超时与 bus recovery、`drivers/soc/` adapter 骨架、配置三层模型以及部分 startup 技术债整改。代码已从单文件 `soc_sal.c` 演进为 `soc_api.h / soc_types.h / soc_manager.c / vendor/demo_soc.c` 结构。
 - **本地工具链状态**：`STM32CubeCLT` 已完成安装，`arm-none-eabi-gcc`、`cmake` 与 `ninja` 可用；当前 `openBmsClaw` 工程已完成 `cmake --preset Debug` 配置与 `cmake --build --preset Debug` 构建，成功生成 `.elf`、`.hex` 与 `.bin` 产物。
-- **当前构建资源占用**：`RAM: 4184 B / 20 KB = 20.43%`，`FLASH: 31348 B / 64 KB = 47.83%`。这说明当前 V0 代码在 F103 学习板上仍具备继续联调的空间，但后续若叠加复杂 UI、大字库、BLE 与更多业务逻辑，仍需保持裁剪纪律。
-- **硬件联调状态**：评估板与逻辑分析仪正持续跟进采购到货状态，实际 I2C 上板通信测试处于等待前置硬件就位状态。
+- **当前构建资源占用**：最新已知构建结果为 `RAM: 4200 B / 20 KB = 20.51%`，`FLASH: 32708 B / 64 KB = 49.91%`。较早期版本略有增长，主要来自 `soc_driver_ops_t` 适配器结构、`soc_manager.c` 与 `vendor/demo_soc.c` 拆分后的函数表与独立函数开销。
+- **硬件联调状态**：仍未形成真实 SoC 上板记录。当前已有 I2C probe、自测 hook 和 demo adapter，但 `soc_sal_init()` 尚未进入运行路径，因此 SoC 初始化和真实 INT 初始化都还未在运行时发生。
 
 ---
 
@@ -51,32 +51,36 @@
 
 ### Action Item 05: 在 `drivers/` 抽象 SAL 层与防呆自愈机制
 - **计划定位**：Day 3
-- **当前状态**：✅ **已完成 (Completed)**
+- **当前状态**：🟡 **部分完成 (Partially Completed)**
 - **执行详情与输出物**：
-  1. 在 `drivers/` 下构建了跨 SoC 厂商的标准抽象转译层 (SAL)：[soc_sal.h](file:///Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/drivers/soc_sal.h) 与 [soc_sal.c](file:///Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/drivers/soc_sal.c)。
-  2. **统一标准 API 抹平差异**：暴露了一致的 `soc_get_voltage()`, `soc_get_current()`, `soc_get_temperature()`, `soc_set_ocp()`, `soc_poll_events()` 接口，业务层完全脱离底层具体芯片的寄存器依赖。
-  3. **SAL 层自愈协调与诊断日志**：实现了 `soc_sal_bus_recovery` 机制。当底层读写返回总线错误或超时锁死时，SAL 层自动接管并触发 GPIO 模拟 9 个时钟脉冲释放总线，同时向 UART 终端打印出带计数追踪的实时警告日志。
-  4. 移除了空置冗余的 `gpio/`, `tim/`, `uart/` 辅助目录，更新了 [drivers/README.md](file:///Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/drivers/README.md)，保留起步探针。
-  5. 已将 `soc_sal.c` 添加至 `CMakeLists.txt`。
+  1. 公共 API 已拆为 `drivers/soc/soc_api.h` 与 `drivers/soc/soc_types.h`，上层不再通过 `soc_sal.h` 传递性看到 HAL 头文件。
+  2. `soc_sal.c` 已拆分为 [soc_manager.c](file:///Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/drivers/soc/soc_manager.c) 与 [vendor/demo_soc.c](file:///Users/huoward/Project/11.openBattery/openBmsClaw/openBmsClaw/drivers/soc/vendor/demo_soc.c)，demo 寄存器表已移出公共 SAL。
+  3. **SAL 层自愈协调与诊断日志**：`soc_sal_bus_recovery` 仍保留，manager 会在 adapter 返回错误后触发 bus recovery。
+  4. 已建立 `soc_driver_ops_t` 函数表机制，形成真正的 adapter 雏形。
+  5. 但 `soc_sal_init()` 仍未进入运行路径，因此当前只能说明“结构与构建完成”，不能说明“初始化已打通”。
 
 ### Action Item 06: 集成 SoC 基线通信实板联调
 - **计划定位**：评估板到货即开始
 - **当前状态**：⏸️ **未开始 (等待硬件就位)**
-- **真实度声明**：本地交叉编译已经完成，当前已具备 `.elf`、`.hex` 与 `.bin` 固件产物；但仍未执行下载、上板和实测，需等待专用 SoC 评估板与逻辑分析仪就位后方可展开总线波形抓包与终端数据跳动校验。
+- **真实度声明**：本地交叉编译已经完成，当前已具备 `.elf`、`.hex` 与 `.bin` 固件产物；但仍未执行真实 SoC 的下载、上板和实测。当前甚至还未在运行路径中调用 `soc_sal_init()`，因此不应将 demo adapter 视为 SoC 联调已开始。
 
 ### Action Item 07: 设计“紧急告警高速通道”
 - **计划定位**：Day 4
-- **当前状态**：✅ **代码已完成，实板未验证 (Code Completed, Hardware Not Verified)**
+- **当前状态**：🟡 **结构已完成，运行时未完全接通 (Structurally Done, Runtime Not Fully Wired)**
 - **执行详情与输出物**：
   1. 在 `config/sys_config.h` 中启用了 `CONFIG_ENABLE_SOC_INT_HIGHWAY`，并定义了当前中断引脚索引。
   2. 在 `hal/exti/` 下实现了 EXTI 初始化、软件触发与 `EXTI4_IRQHandler` 中断服务链路。
-  3. 在 `drivers/soc_sal.c` 中完成了 SoC 中断入口与上层紧急回调注册逻辑。
-  4. 在 `services/power/power_service.c` 中补齐了紧急自锁、慢速诊断和告警闪烁处理流程。
-  5. 当前状态仅说明代码链路已纳入构建，尚未完成真实 SoC INT 引脚、限流动作与硬件故障注入测试。
+  3. `drivers/soc/soc_manager.c` 已包含 SoC 中断入口与上层紧急回调注册逻辑。
+  4. `services/power/power_service.c` 已完成“快路径只锁存状态、慢路径再诊断”的结构，并移除了 LED 直控和 busy wait。
+  5. 但由于 `soc_sal_init()` 尚未被实际调用，`hal_exti_init()` 当前并未在运行时接通该链路；现阶段仅能说明软件结构存在，不能说明中断初始化已真正执行。
 
 ### Action Item 08: 周末复盘与文档回写
 - **计划定位**：周末
-- **当前状态**：⏸️ **未开始 (Not Started)**
+- **当前状态**：✅ **已完成 (Completed)**
+- **执行详情**：
+  1. `0_System/00.tech_architecure.md` 已升级为可执行的顶层架构约束文档。
+  2. `2_Action/Action-Week-0518-startup-tech-debt-issues.md` 已记录 startup 技术债并跟踪部分 issue 的整改状态。
+  3. `0_System/Course/` 已回写中断快/慢路径、配置三层模型、验证分层、接口泄露等教学内容。
 
 ---
 
@@ -85,8 +89,10 @@
   1. 工程目录规范、配置宏的语法层面对齐、头文件层级依赖关系（已处理相对路径与同级引用机制）。
   2. 本地 STM32 交叉编译工具链可用，`arm-none-eabi-gcc`、`cmake`、`ninja` 均已通过命令行检查。
   3. `openBmsClaw` 已完成 `Debug` 配置与构建，成功生成 `openBmsClaw.elf`、`openBmsClaw.hex` 和 `openBmsClaw.bin`。
+  4. `drivers/soc/` adapter 结构、配置三层模型和部分技术债整改已通过构建层验证。
 - **未验证**：
   1. 单片机实物下载与板测启动。
   2. I2C 总线真实电气波形捕获。
   3. SoC 寄存器握手通信与真实电压/温度读取。
   4. SoC 紧急中断引脚、限流动作和故障注入场景。
+  5. `soc_sal_init()` 接入运行路径后的完整 `SWIER -> EXTI -> callback -> power lock` 闭环。

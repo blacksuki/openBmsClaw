@@ -1,5 +1,7 @@
 # 本周执行计划：SoC 双核协同架构打通 (Week-0518)
 
+> 最新状态核对：2026-07-01
+
 本周计划的核心目标，是全面落地“以集成 SoC 为底层基础，以 MCU 为智能调度核心”的双核架构。本周抛弃过时的分散硬件（纯 BMS/协议板）联调路线，收敛到**打通 MCU 与高集成度 SoC 评估板的双向通信基线**这一最关键的战役上。
 
 ## 1. 基本术语与背景知识 (面向新手说明)
@@ -53,16 +55,16 @@
 ## 5. Action Items (本周行动项)
 本周行动项不再使用旧的独立分散硬件任务清单，统一重构如下：
 
-| No. | Action item | 本周定位 | 输出物 / 验收标准 |
-| --- | --- | --- | --- |
-| 01 | 确立 F103 资源裁剪方案 | Day 1 | 整理出 `config/` 宏开关，剔除冗余组件。 |
-| 02 | 跟踪 SoC 评估板与逻辑分析仪到货 | 持续跟踪 | 确保联调硬件就位。 |
-| 03 | 搭建全新的双核分层工程骨架 | Day 1-2 | 建立 `app, services, drivers, hal` 目录及空文件。 |
-| 04 | 编写强鲁棒性的 `hal_i2c` 驱动 | Day 2 | 提供带 Timeout 和非阻塞能力的 I2C 外设封装。 |
-| 05 | 在 `drivers/` 抽象 SAL 层与防呆自愈机制 | Day 3 | 编写 I2C 总线自愈（9个时钟脉冲发送）函数，以及 SoC 通用 API 头文件定义。 |
-| 06 | 集成 SoC 基线通信实板联调 | 到货即开干 | 通过逻辑分析仪抓包确认 I2C 交互，终端成功打印出 SoC 的真实电压/温度。 |
-| 07 | 设计“紧急告警高速通道” | Day 4 | 定义并打通 SoC 中断引脚到 `services` 紧急限流函数的直达信号。 |
-| 08 | 周末复盘与文档回写 | 周末 | 本周通信打通的避坑指南及下周策略落地的入口。 |
+| No. | Action item | 本周定位 | 输出物 / 验收标准 | 2026-07-01 最新状态 |
+| --- | --- | --- | --- | --- |
+| 01 | 确立 F103 资源裁剪方案 | Day 1 | 整理出 `config/` 宏开关，剔除冗余组件。 | `已完成`：`sys_config.h` 已建立；并进一步收敛为 `profile_config.h + feature_config.h + app_config.h` 三层配置模型。 |
+| 02 | 跟踪 SoC 评估板与逻辑分析仪到货 | 持续跟踪 | 确保联调硬件就位。 | `进行中`：计划/代码中仍无真实 SoC 上板结果与抓波形记录。 |
+| 03 | 搭建全新的双核分层工程骨架 | Day 1-2 | 建立 `app, services, drivers, hal` 目录及空文件。 | `已完成且超出原目标`：不仅目录已建立，还新增了 `drivers/soc/`、`vendor/demo_soc.c`、`profile_config.h`。 |
+| 04 | 编写强鲁棒性的 `hal_i2c` 驱动 | Day 2 | 提供带 Timeout 和非阻塞能力的 I2C 外设封装。 | `已完成（代码/构建层）`：`hal_i2c` 已接入构建，保留 timeout 与 bus recovery；但未完成真实板级波形验证。 |
+| 05 | 在 `drivers/` 抽象 SAL 层与防呆自愈机制 | Day 3 | 编写 I2C 总线自愈（9个时钟脉冲发送）函数，以及 SoC 通用 API 头文件定义。 | `部分完成并已进入整改阶段`：公共 API 已拆为 `soc_api.h / soc_types.h / soc_manager.c / vendor/demo_soc.c`，但 `soc_sal_init()` 仍未进入实际运行路径，真实 SoC 初始化未打通。 |
+| 06 | 集成 SoC 基线通信实板联调 | 到货即开干 | 通过逻辑分析仪抓包确认 I2C 交互，终端成功打印出 SoC 的真实电压/温度。 | `未开始`：当前仅有 I2C 探针扫描与 demo adapter，无真实 SoC 寄存器联调、无真实电压/温度读取。 |
+| 07 | 设计“紧急告警高速通道” | Day 4 | 定义并打通 SoC 中断引脚到 `services` 紧急限流函数的直达信号。 | `代码链路部分完成`：快/慢路径、回调注册、自测 hook 已存在；但 `soc_sal_init()` 未进入运行路径，真实 EXTI 初始化与 SoC INT 硬件联调仍未完成。 |
+| 08 | 周末复盘与文档回写 | 周末 | 本周通信打通的避坑指南及下周策略落地的入口。 | `已完成（文档层）`：`0_System/Course/`、`2_Action/`、架构文档与技术债 issues 已持续回写。 |
 
 ## 6. 建议周节奏
 | 时间 | 重点安排 |
@@ -75,3 +77,57 @@
 | **Day 7** | 总结通信基线的排错经验；规划下周的 `srv_power_alloc`（功率调度）等智能服务层的落地逻辑。 |
 
 > 注：旧版基于散件拆分架构的 `archive/Plan-Week-0325-item-*.md` 辅助任务文件已全数废弃，请开发团队直接遵循上述 SoC 打通总路线执行。
+
+## 7. 与系统设计目标的对比结论（2026-07-01）
+
+结合 `0_System/00.tech_architecure.md` 当前阶段目标，现状可归纳为：
+
+### 已完成
+
+1. `Phase 0 / F103 bring-up` 的基础骨架已成立：
+   - `board / hal / drivers / services / app / config` 已落地。
+   - `cmake --preset Debug && cmake --build --preset Debug` 可通过。
+2. I2C 防挂死基础能力已具备：
+   - `hal_i2c` timeout
+   - bus recovery
+   - I2C probe
+3. 部分 startup 技术债已整改：
+   - 公共 SoC API 不再泄露 HAL 头文件
+   - `APP_ENABLE_* / FEATURE_* / PROFILE_*` 已收敛
+   - `app/` 不再直接触发自测 hook
+   - `services/power` 已移除 busy wait 和 LED 直控
+4. SoC 抽象层已经从单文件 demo 走向 adapter 结构：
+   - `soc_api.h`
+   - `soc_types.h`
+   - `soc_manager.c`
+   - `vendor/demo_soc.c`
+
+### 未完成
+
+1. 真实 SoC 初始化路径未接入：
+   - `soc_sal_init()` 目前没有被 `main/app/bringup/service` 调用。
+   - 因此 `hal_exti_init()` 也尚未在运行时真正初始化 SoC INT 高速通道。
+2. 真实 SoC 联调未开始：
+   - 无真实芯片 ID、无真实电压/温度、无逻辑分析仪抓包记录。
+3. 紧急告警高速通道仍停留在软件结构验证：
+   - 自测 hook 存在，但不是实板 INT 验证。
+4. `Phase 1 / SoC SAL 基线` 只完成了代码结构，没有完成硬件链路闭环。
+5. `Phase 2 / 服务层策略闭环` 尚未开始：
+   - 多口功率分配
+   - 热管理降额
+   - 故障恢复策略
+6. `Phase 3 / F030 样片验证` 尚未开始：
+   - 无 F030 构建 profile 切换实测
+   - 无 F030 下载、I2C、ADC、EXTI、watchdog 板级验证
+
+## 8. 计划更新：当前未完成任务的下一步
+
+基于上述状态，后续计划不应再写成“继续抽象 SAL”，而应收敛为下面 5 个更具体的任务：
+
+| 新序号 | 下一步任务 | 目标 | 验收标准 |
+| --- | --- | --- | --- |
+| P1 | 接通 SoC manager 运行路径 | 在 bring-up 或 power 初始化阶段真正调用 `soc_sal_init()` | 串口能看到 `SAL: SoC(demo) init ...` 或清晰失败日志；`soc_poll_events()` 不再总是离线分支 |
+| P2 | 完成 SoC INT 软件闭环的真正初始化验证 | 确保 `hal_exti_init()` 在运行时被调用，自测 hook 走完整 `SWIER -> EXTI -> callback -> power lock` 链路 | 自测时出现完整中断链路日志，而非仅写 SWIER |
+| P3 | 真实 SoC / 逻辑分析仪联调 | 接入评估板，完成至少一条真实寄存器读取链路 | 抓到 I2C 波形；终端打印真实 chip id / 电压 / 温度之一 |
+| P4 | 补齐 Phase 1 剩余技术债 | 清理剩余口径不一致与初始化缺口 | `soc_set_port_power` 的 W/mW 口径完成统一；issues 文档中相关项状态同步 |
+| P5 | 准备 F030 样片验证入口 | 至少切一次 `PROFILE_F030_MIN_PRODUCT` 并确认构建 | F030 profile 能编译通过；列出缺失外设/启动文件/板级适配项 |
