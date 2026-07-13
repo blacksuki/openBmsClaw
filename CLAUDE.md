@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 These bias toward caution over speed; use judgment on trivial tasks.
 
-1. **Think before coding.** Don't assume, don't hide confusion, surface tradeoffs. State assumptions explicitly and ask when uncertain — this repo has implicit contracts (the reply-JSON field names, date-namespaced paths, optimistic-tolerance) that are easy to break silently. If a question file or workflow change has multiple reasonable interpretations, present them rather than picking one.
-2. **Simplicity first.** Minimum content/code that solves the problem, nothing speculative. The scripts are deliberately small and template-driven; don't add config, abstraction layers, or error handling for impossible cases. If you write a 200-line script where 50 would do, rewrite it.
-3. **Surgical changes.** Touch only what the request requires. Don't "improve" adjacent agent prompts, reword unrelated report sections, or refactor the shell scaffolding that works. Match the existing style (Chinese prose, the `chore(pm)/status(<agent>)/feat(pm)` commit prefixes). Every changed line should trace directly to the user's request; if you spot unrelated dead content, mention it rather than delete it.
-4. **Goal-driven execution.** Turn tasks into verifiable goals. Since there is no test runner here, the verification is behavioral: run the three scripts in order and confirm the file flow and a coherent report (see "Verifying a change" below). For multi-step work, state a brief plan with a `verify:` check per step before starting
+1. **Think before coding.** Don't assume, don't hide confusion, surface tradeoffs. State assumptions explicitly and ask when uncertain — this repo has implicit contracts (strict layer dependencies, the single-`PROFILE` config source, the 已实现/当前代码事实/规划中 distinction) that are easy to break silently. If a doc or config change has multiple reasonable interpretations, present them rather than picking one.
+2. **Simplicity first.** Minimum content/code that solves the problem, nothing speculative. The firmware is a deliberately minimal bring-up baseline; don't add config, abstraction layers, or error handling for impossible cases. This is a 64KB-Flash target — speculative code costs real resource budget.
+3. **Surgical changes.** Touch only what the request requires. Don't "improve" adjacent docs, reword unrelated sections, or refactor working scaffolding. Match the existing style (Chinese prose in docs; Conventional-Commit prefixes `docs:` / `fix(scope):` / `feat:` / `skill:`). Every changed line should trace directly to the user's request; if you spot unrelated dead content, mention it rather than delete it.
+4. **Goal-driven execution.** Turn tasks into verifiable goals. Since there is no test runner here, the verification is the build: `cd openBmsClaw && cmake --preset Debug && cmake --build --preset Debug` must exit 0 with **zero** warnings (`-Wall -Wextra -Wpedantic`), and check the RAM/FLASH deltas in the map output. For layering/config changes, also inspect the compiler dependency set (`ninja -t deps <obj>`) to prove the intended boundary actually holds. For multi-step work, state a brief plan with a `verify:` check per step before starting.
 
 ## What this repo is
 
@@ -21,7 +21,7 @@ These bias toward caution over speed; use judgment on trivial tasks.
 ### Core architecture concept: "Brain & Body" dual-chip split
 - **Body** = a dedicated power **SoC** (Injoinic IP53xx, SW35xx, etc.) does buck-boost conversion, fast-charge protocol handshakes (PD/QC/UFCS), hardware safety interrupts.
 - **Brain** = the **STM32 MCU** does power-allocation strategy, SOH/runtime prediction, UI (OLED/LED), BLE.
-- The MCU talks to the SoC only through a vendor-agnostic abstraction layer (`drivers/soc_sal.h`) over I2C/UART — **"要接口不要源码" (interface, not source)**. App/service code must never poke SoC registers directly.
+- The MCU talks to the SoC only through a vendor-agnostic abstraction layer (`drivers/soc/`, public API in `soc_api.h`) over I2C/UART — **"要接口不要源码" (interface, not source)**. App/service code must never poke SoC registers directly.
 
 ## Repository layout (top level)
 
@@ -62,23 +62,26 @@ Strict layering, top to bottom. **Each layer only calls the one below it**:
 Src/main.c            thin entry: board_init() → app_init() → app_run() loop (keep it thin)
 app/                  product orchestration; wires services together
 services/             bms · power · protocol · ui · bringup · dock  (coordination, no registers)
-drivers/soc_sal.*     vendor-agnostic SoC abstraction (soc_get_*/soc_set_*/events/emergency cb)
-drivers/{adc,i2c}/    MCU peripheral probes (GPIO/UART/I2C/ADC/TIM access)
+drivers/soc/          vendor-agnostic SoC abstraction: soc_api.h (public) · soc_types.h · soc_driver.h (ops vtable) · soc_manager.c (forwards to active adapter) · vendor/<chip>.c (register tables live here only)
+drivers/{adc,i2c}/    MCU peripheral probes (GPIO/UART/I2C/ADC access)
 hal/{i2c,exti}/       hides chip differences
-board/                pin mapping & board capabilities (board_stm32f103c8t6_usb_uart.h)
-config/               compile-time feature switches
+board/                pin mapping, board capabilities (board_stm32f103c8t6_usb_uart.h), 1ms SysTick (board_get_tick_ms)
+config/               compile-time PROFILE / feature switches
 ```
+
+`drivers/soc/soc_sal.h` remains as a thin bring-up entry (it re-exports `soc_api.h` and declares the self-test hook `soc_sal_int_selftest_trigger()`, called only from `bringup_service`). Adding a second SoC = a new `vendor/<chip>.c` implementing `soc_driver_ops_t` + a selection line in `soc_manager.c`; `app/` and `services/` don't change. Note: `soc_sal_init()` is not yet wired into the runtime path, so the SoC link is structurally complete but not yet closed on real hardware — see `1_Plan/Plan-Stage-Post-0518.md`.
 
 **Layering rules (enforced by convention, not the compiler):**
 - `app/` and `services/` must never access registers directly.
 - Chip differences sink into `hal/`; MCU peripheral access into `drivers/`; board specifics into `board/`.
 - `main.c` stays minimal — no product logic, register I/O, protocol state machines, or BMS strategy.
 
-**Compile-time feature gating** — services are tailored in, not toggled at runtime:
-- `config/app_config.h` → `APP_ENABLE_*_SERVICE` selects which services `app_init()`/`app_run()` call.
-- `config/feature_config.h` → `FEATURE_ENABLE_*` enables peripherals (UART log, ADC/I2C probes, BMS/power/protocol).
-- `config/board_config.h`, `config/sys_config.h` → board selection / system config.
-- `app.c` reads these via `#if` blocks. To bring a service online, flip its macro here rather than editing call sites.
+**Compile-time feature gating** — services are tailored in, not toggled at runtime. `config/profile_config.h` is the single source of truth: exactly one `PROFILE_*` is defined (`PROFILE_F103_BRINGUP` today; `PROFILE_F030_MIN_PRODUCT` is the production candidate), guarded by an `#error`. Everything else derives from it, so two switches can never disagree:
+- `config/feature_config.h` → `FEATURE_ENABLE_*` = **compile axis** (which capabilities/probes are built), per PROFILE.
+- `config/app_config.h` → `APP_ENABLE_*` = **schedule axis** (which services `app_init()`/`app_run()` call), per PROFILE.
+- A service runs only when both axes agree: `app.c` gates it as `#if APP_ENABLE_<X> && FEATURE_ENABLE_<X>`. To bring a service online, adjust the PROFILE-derived values, not the call sites.
+- `config/sys_config.h` aggregates the includes and holds `CONFIG_*` system settings (I2C timeout, bus recovery, SoC INT highway, `CONFIG_ENABLE_BRINGUP_SELFTEST`).
+- Do **not** reintroduce a feature switch with an independent value in a second file — the PROFILE-derived model exists specifically to kill that "double truth" (history in `2_Action/Action-Week-0518-startup-tech-debt-issues.md`).
 
 **Samples** (`samples/temperature_alarm/`) are standalone demos. `APP_ENABLE_TEMPERATURE_ALARM_SAMPLE` in `app_config.h` short-circuits the normal service path entirely when set — keep it `0` for mainline integration.
 
@@ -86,7 +89,7 @@ config/               compile-time feature switches
 
 - 4-space indent; braces on their own line; single-responsibility functions.
 - Function names use module prefixes: `app_init`, `board_init`, `bringup_service_init`, `protocol_service_process`.
-- Macros ALL_CAPS: `APP_ENABLE_UI_SERVICE`, `FEATURE_ENABLE_UART_LOG`.
+- Macros ALL_CAPS: `APP_ENABLE_UI_SERVICE`, `FEATURE_ENABLE_I2C_PROBE`, `PROFILE_F103_BRINGUP`.
 - C standard is C11 (CMake sets `CMAKE_C_STANDARD 11`); README brands it C99 — prefer the CMake fact.
 - Prefer minimal, verifiable changes. Don't reformat ST-generated files (`Src/startup_*.S`, `*_flash.ld`, `cmake/vscode_generated.cmake`) or do large sweeping rewrites of the generated project.
 
