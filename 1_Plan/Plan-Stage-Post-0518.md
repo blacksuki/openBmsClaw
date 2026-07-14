@@ -4,6 +4,8 @@
 > 适用范围：承接 `Plan-Week-0518.md` 完成后的后续规划
 > 目标：把 `openBattery` 从“F103 上的软件结构验证”推进到“F030 + SoC 最小量产链路”
 
+> 执行入口补充：当前 6 项未完成工作的具体执行顺序与验收标准，已单独整理到 `1_Plan/Plan-Execution-0714.md`。
+
 ## 1. 文档目的
 
 `Plan-Week-0518.md` 的核心价值，是把 `openBmsClaw` 从最小 STM32 生成工程，推进到具备 `board / hal / drivers/soc / services / app / config` 结构、并开始具备 SoC 抽象层雏形的状态。
@@ -101,6 +103,52 @@ Stage E  量产前验证与资料沉淀
    - 真实 chip id
    - 真实电压
    - 真实温度
+
+### 4.2.1 具体任务：承接 Week-0518 第 05 项的未完成工作说明与整改动作
+
+`Week-0518` 中“在 drivers/ 抽象 SAL 层与防呆自愈机制”这一项，当前应明确判定为：
+
+> 代码结构已完成一半以上，但运行路径、初始化闭环和实板联调仍未完成。
+
+当前代码事实如下：
+
+1. 已完成部分：
+   - `hal_i2c` 的 timeout 与 `9` 个时钟脉冲总线自愈代码已经存在。
+   - 公共 SoC API 已拆分为 `soc_api.h / soc_types.h / soc_manager.c / vendor/demo_soc.c`。
+   - `power_service` 已能注册紧急回调，软件结构上具备快路径/慢路径分层雏形。
+2. 未完成部分：
+   - `soc_sal_init()` 还没有接入真实运行路径，系统启动后 SAL 仍可能停留在离线状态。
+   - `hal_exti_init()` 虽已写在 `soc_sal_init()` 内，但由于初始化入口未接通，SoC INT 高速通道尚未在运行时真正建立。
+   - `bringup` 自测当前只能证明软件触发 hook 存在，不能证明 `SWIER -> EXTI -> callback -> power lock` 全链路已完成真实初始化。
+   - `vendor/demo_soc.c` 仍属于 demo/基线适配器，尚无真实 SoC 芯片 ID、电压、温度读取记录。
+   - 尚无逻辑分析仪抓包结果，因此不能宣称 SAL 已经打通硬件闭环。
+
+对应整改动作应固定为以下 4 步，按顺序执行：
+
+1. 先接通初始化入口：
+   - 在 `bringup_service` 或明确的 service 初始化阶段调用 `soc_sal_init()`。
+   - 禁止继续把 SAL 保持在“已实现但无人调用”的状态。
+2. 再验证中断高速通道：
+   - 调整自测顺序为 `I2C probe -> soc_sal_init() -> hal_exti_init() 生效 -> soc_sal_int_selftest_trigger()`。
+   - 验证重点不是“是否写了 SWIER”，而是 EXTI 回调和 `power_service` 锁存是否真的执行。
+3. 补齐运行时日志：
+   - 必须输出 `SAL init start / ok / fail`、`EXTI init ok / fail`、`SoC chip probe fail` 等明确日志。
+   - 避免后续把“未调用”“调用失败”“总线离线”混成同一种现象。
+4. 最后进入真实实板联调：
+   - 接入真实 SoC 评估板后，先打通一条 `chip id` 读取，再扩展到电压、温度或事件寄存器。
+   - 同步使用逻辑分析仪抓包，记录地址、寄存器、ACK/NACK、异常和恢复行为。
+
+本任务与 `4.2 关键任务` 的对应关系应理解为：
+
+- `4.2` 第 1 条和第 2 条，解决的是 `soc_sal_init()` 没进入运行路径、`soc_poll_events()` 长期离线的问题。
+- `4.2` 第 3 条，解决的是 SoC INT 高速通道只停留在代码结构、没有完成运行时初始化的问题。
+- `4.2` 第 4 到第 6 条，解决的是“只有 demo adapter、没有真实 SoC 链路证据”的问题。
+
+因此，`Stage A` 的口径应保持一致：
+
+- 已实现：SAL API 结构、I2C timeout、自愈机制、demo adapter 骨架。
+- 当前代码事实：初始化入口未闭环，真实 SoC 未联调完成。
+- 规划中：把 SAL 接入运行轴、打通 EXTI 高速通道、完成实板与抓包验证。
 
 ### 4.3 输出物
 
@@ -362,4 +410,3 @@ Stage E  量产前验证与资料沉淀
 对当前项目而言，真正的关键路径不是“再加多少功能”，而是：
 
 > 先把真实 SoC、真实中断、真实样片、真实资源边界逐个打实。
-
