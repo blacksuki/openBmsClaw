@@ -37,6 +37,7 @@ static void soc_sal_exti_hardware_handler(void) {
 bool soc_sal_init(uint8_t i2c_addr) {
   bool exti_ready = true;
 
+  s_sal_initialized = false;
   s_soc_i2c_addr = i2c_addr;
   s_recovery_count = 0u;
   s_ops = demo_soc_get_ops(); /* 当前选择 demo/基线适配器 */

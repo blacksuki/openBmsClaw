@@ -23,7 +23,7 @@ bool soc_sal_init(uint8_t i2c_addr);
 
 /**
  * @brief 查询 SAL 当前是否已经完成运行时初始化
- * @return true 表示 I2C / vendor init / EXTI init 已完成
+ * @return true 表示所有已启用的初始化步骤均已完成
  */
 bool soc_sal_is_initialized(void);
 
