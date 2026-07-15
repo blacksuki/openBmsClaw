@@ -32,7 +32,7 @@
 
 ## 当前优先笔记
 
-1. `Day02_sample-line-compliance-screening-plan.md`
+1. `Day02_japan-compliance-route-v0.md`
 2. `Day03_core-technology-cards.md`
 3. `expert-interview-notes.md`
 4. `japanese-terms-glossary.md`

@@ -32,6 +32,28 @@
 5. `project/` 只放能转化为业务决策的成果。
 6. 每周至少做一次 [Weekly Review](reviews/weekly-review-template.md)。
 
+## Day 作业统一存放规则
+
+从 Day1 开始，所有 `DayXX` 相关文件统一按“内容属性”归档，不再按“当天产生”随意散放：
+
+1. `learning/notes/`
+   - 放学习笔记、概念卡片、导师讲解稿、学习计划
+   - 例如：Day2 学习计划、Day3 技术卡片
+2. `learning/homework/`
+   - 不作为主内容仓库
+   - 只保留 Day 作业入口索引、reviewed/revision 稿和明显属于“作业过程稿”的文件
+3. `research/`
+   - 放已经成型的证据型 Day 作业
+   - 例如：场景地图、合规路线图、法规研究、用户原声整理
+4. `project/`
+   - 只放已经服务业务决策的问题定义、PRD、GTM、ROI、市场进入方案
+   - 不再放 Day 作业模板稿、未完成作业稿、导师练习稿
+
+判断规则只有一句：
+
+- `这份文件如果拿掉 Day 标签，仍然是业务/研究资产，就进 research/ 或 project/`
+- `如果它本质上还是学习过程或作业过程，就留在 learning/`
+
 ## 当前启动路线
 
 当前从 14 天起步计划开始：

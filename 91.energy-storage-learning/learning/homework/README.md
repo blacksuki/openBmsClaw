@@ -9,6 +9,20 @@
 3. 不确定内容要写入 `待验证项`。
 4. 被批改后，不覆盖原稿；新增 `reviewed` 或 `revision` 文件。
 
+## 统一归档方式
+
+`homework/` 不是所有 Day 作业最终成品的统一落点，而是：
+
+1. Day 作业入口索引
+2. 作业过程稿
+3. 导师批改稿 / revision 稿
+
+最终归档按内容属性决定：
+
+- 场景、法规、用户原声、供应链证据类 -> `research/`
+- 学习笔记、技术卡片、导师讲解稿 -> `learning/notes/`
+- 可直接支撑业务决策的市场进入方案、PRD、ROI、GTM -> `project/`
+
 ## 推荐命名
 
 ```text
@@ -28,7 +42,9 @@ Day01_homework_scenario-map_revision.md
 | Day 1 | 一户建家庭备电用户原声 | [../../research/japan-market/Day01_japan-detached-house-backup-power-x-voice.md](../../research/japan-market/Day01_japan-detached-house-backup-power-x-voice.md) |
 | Day 1 | 车中泊/露营/户外备电用户原声 | [../../research/japan-market/Day01_japan-car-camping-outdoor-power-x-voice.md](../../research/japan-market/Day01_japan-car-camping-outdoor-power-x-voice.md) |
 | Day 1 | 小型商用备电用户原声 | [../../research/japan-market/Day01_japan-small-business-backup-power-x-voice.md](../../research/japan-market/Day01_japan-small-business-backup-power-x-voice.md) |
+| Day 2 | 合规路线图 v0 | [../../research/regulations/Day02_japan-compliance-route-v0.md](../../research/regulations/Day02_japan-compliance-route-v0.md) |
 | Day 3 | 九州 60Hz 50kW/100kWh 低压储能规格关键条目 | [../../research/regulations/Day03_kyushu-60hz-50kw-100kwh-low-voltage-storage-spec.md](../../research/regulations/Day03_kyushu-60hz-50kw-100kwh-low-voltage-storage-spec.md) |
+| Day 3 | 低压储能核心技术卡片 | [../notes/Day03_low-voltage-storage-core-knowledge-cards.md](../notes/Day03_low-voltage-storage-core-knowledge-cards.md) |
 
 ## 作业模板
 
