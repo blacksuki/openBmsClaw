@@ -26,7 +26,7 @@ static bool bringup_service_soc_int_selftest_enabled(void)
     return (CONFIG_ENABLE_BRINGUP_SELFTEST != 0) && (CONFIG_ENABLE_SOC_INT_HIGHWAY != 0);
 }
 
-/* 探针阶段结束后的去向：开启自测则进入 SoC INT 自测，否则直接结束 */
+/* 探针阶段结束后先进入 SoC SAL 初始化，再决定是否进入后续自测 */
 static bringup_stage_t bringup_service_stage_after_probes(void)
 {
     return BRINGUP_STAGE_SOC_SAL_INIT;
@@ -176,8 +176,9 @@ static bringup_stage_t bringup_service_next_stage(bringup_stage_t stage)
     case BRINGUP_STAGE_I2C:
         return bringup_service_stage_after_probes();
     case BRINGUP_STAGE_SOC_SAL_INIT:
-        return bringup_service_soc_int_selftest_enabled() ? BRINGUP_STAGE_SOC_INT_SELFTEST
-                                                          : BRINGUP_STAGE_DONE;
+        return (s_soc_sal_ready && bringup_service_soc_int_selftest_enabled())
+                   ? BRINGUP_STAGE_SOC_INT_SELFTEST
+                   : BRINGUP_STAGE_DONE;
     case BRINGUP_STAGE_SOC_INT_SELFTEST:
         return BRINGUP_STAGE_DONE;
     case BRINGUP_STAGE_DONE:
