@@ -7,6 +7,9 @@
 #include "drivers/soc_sal.h"
 
 static bringup_stage_t s_current_stage = BRINGUP_STAGE_BOOT;
+static uint8_t s_detected_soc_address = 0x75u;
+static bool s_detected_soc_address_valid = false;
+static bool s_soc_sal_ready = false;
 
 static bool bringup_service_adc_enabled(void)
 {
@@ -26,8 +29,7 @@ static bool bringup_service_soc_int_selftest_enabled(void)
 /* 探针阶段结束后的去向：开启自测则进入 SoC INT 自测，否则直接结束 */
 static bringup_stage_t bringup_service_stage_after_probes(void)
 {
-    return bringup_service_soc_int_selftest_enabled() ? BRINGUP_STAGE_SOC_INT_SELFTEST
-                                                      : BRINGUP_STAGE_DONE;
+    return BRINGUP_STAGE_SOC_SAL_INIT;
 }
 
 static void bringup_service_run_adc_probe(void)
@@ -58,6 +60,8 @@ static void bringup_service_run_i2c_probe(void)
     uint8_t first_found_address = 0u;
     int found_count;
 
+    s_detected_soc_address_valid = false;
+
     if (board_has_uart_log())
     {
         board_uart_write_string("i2c init start\r\n");
@@ -79,6 +83,12 @@ static void bringup_service_run_i2c_probe(void)
     }
 
     found_count = board_i2c_probe_scan(&first_found_address);
+
+    if (found_count > 0)
+    {
+        s_detected_soc_address = first_found_address;
+        s_detected_soc_address_valid = true;
+    }
 
     if (!board_has_uart_log())
     {
@@ -104,6 +114,34 @@ static void bringup_service_run_i2c_probe(void)
     }
 
     board_uart_write_string("i2c scan fail\r\n");
+}
+
+static void bringup_service_run_soc_sal_init(void)
+{
+    if (!s_detected_soc_address_valid)
+    {
+        s_soc_sal_ready = false;
+
+        if (board_has_uart_log())
+        {
+            board_uart_write_string("bringup: soc sal init skipped (no i2c device)\r\n");
+        }
+
+        return;
+    }
+
+    if (board_has_uart_log())
+    {
+        char message[80];
+        (void)snprintf(
+            message,
+            sizeof(message),
+            "bringup: soc sal init start addr=0x%02X\r\n",
+            (unsigned int)s_detected_soc_address);
+        board_uart_write_string(message);
+    }
+
+    s_soc_sal_ready = soc_sal_init(s_detected_soc_address);
 }
 
 static void bringup_service_run_soc_int_selftest(void)
@@ -137,6 +175,9 @@ static bringup_stage_t bringup_service_next_stage(bringup_stage_t stage)
                                              : bringup_service_stage_after_probes();
     case BRINGUP_STAGE_I2C:
         return bringup_service_stage_after_probes();
+    case BRINGUP_STAGE_SOC_SAL_INIT:
+        return bringup_service_soc_int_selftest_enabled() ? BRINGUP_STAGE_SOC_INT_SELFTEST
+                                                          : BRINGUP_STAGE_DONE;
     case BRINGUP_STAGE_SOC_INT_SELFTEST:
         return BRINGUP_STAGE_DONE;
     case BRINGUP_STAGE_DONE:
@@ -148,6 +189,9 @@ static bringup_stage_t bringup_service_next_stage(bringup_stage_t stage)
 void bringup_service_init(void)
 {
     s_current_stage = BRINGUP_STAGE_BOOT;
+    s_detected_soc_address = 0x75u;
+    s_detected_soc_address_valid = false;
+    s_soc_sal_ready = false;
 }
 
 void bringup_service_process(void)
@@ -164,6 +208,10 @@ void bringup_service_process(void)
     else if (s_current_stage == BRINGUP_STAGE_I2C)
     {
         bringup_service_run_i2c_probe();
+    }
+    else if (s_current_stage == BRINGUP_STAGE_SOC_SAL_INIT)
+    {
+        bringup_service_run_soc_sal_init();
     }
     else if (s_current_stage == BRINGUP_STAGE_SOC_INT_SELFTEST)
     {
