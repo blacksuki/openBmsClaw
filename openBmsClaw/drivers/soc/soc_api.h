@@ -22,6 +22,12 @@
 bool soc_sal_init(uint8_t i2c_addr);
 
 /**
+ * @brief 查询 SAL 当前是否已经完成运行时初始化
+ * @return true 表示所有已启用的初始化步骤均已完成
+ */
+bool soc_sal_is_initialized(void);
+
+/**
  * @brief 在 SAL 层触发总线死锁自愈机制 (Bus Recovery)
  * @note 调用底层 GPIO 模拟翻转逻辑连续发出 9 个时钟脉冲，恢复 I2C 信道，并重置
  * SAL 状态机

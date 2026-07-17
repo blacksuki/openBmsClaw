@@ -33,6 +33,49 @@
   - UART log capture
   - at least one real I2C waveform screenshot or analyzer export
 
+## Current Status (2026-07-15)
+
+截至 `2026-07-15`，`Stage A` 当前状态应明确区分为：
+
+### 已完成（代码 / 构建层）
+
+1. Task 1 已完成：
+   - `bringup_service` 已新增 `BRINGUP_STAGE_SOC_SAL_INIT`
+   - `soc_sal_init()` 已进入真实运行路径
+   - `soc_sal_init()` 失败时不再继续误跑 SoC INT 自测
+2. Task 2 已完成：
+   - `soc_api.h` 已新增 `soc_sal_is_initialized()`
+   - `soc_manager.c` 已新增 `SAL: init start`
+   - `soc_manager.c` 已新增 `SAL: vendor init failed!`
+   - `soc_manager.c` 已新增 `SAL: EXTI init ok/fail`
+   - readiness 语义已收敛为“所有已启用的初始化步骤均已完成”
+3. Task 3 已完成：
+   - `bringup_service` 已新增 `bringup: soc poll online/offline`
+   - `bringup_service` 已新增 `bringup: soc int selftest skipped/PASS/FAIL`
+   - `bringup_service.c` 的依赖检查已证明未直接依赖 `hal_i2c.h`、`hal_exti.h` 或 `vendor/demo_soc.h`
+
+### 已验证（当前会话内实际执行）
+
+1. `cd openBmsClaw && cmake --preset Debug && cmake --build --preset Debug` 可通过。
+2. `cd openBmsClaw/build/Debug && ninja -t deps CMakeFiles/openBmsClaw.dir/services/bringup/bringup_service.c.obj`
+   - 对 `hal/i2c/hal_i2c.h`
+   - `hal/exti/hal_exti.h`
+   - `drivers/soc/vendor/demo_soc.h`
+   的检索无命中，说明层边界保持成立。
+
+### 未完成（硬件 / 实板层）
+
+1. Task 4 仍未执行：
+   - `2_Action/Action-StageA-SoC-Validation.md` 尚未创建
+   - 尚未完成实板烧录
+   - 尚未采集 UART 实机日志
+   - 尚未采集逻辑分析仪抓包
+   - 尚未记录真实 SoC 的 `ChipID / Voltage / Temperature`
+
+结论：
+
+> Task 4 不是“只在本地 build 后就能完成”的任务，它必须在固件烧录到目标板、并接好 SoC 评估板与逻辑分析仪之后，才能真正执行。
+
 ### Task 1: Wire `soc_sal_init()` Into the Bring-up State Machine
 
 **Files:**
@@ -451,6 +494,20 @@ git commit -m "feat: add stage a selftest and online poll logs"
 
 ### Task 4: Create the Stage A Bench Validation Record and Capture First Hardware Evidence
 
+**Current status:**
+- `Pending`
+- 原因：该任务必须依赖实板烧录、UART 日志观测和逻辑分析仪抓包；当前仓库内仅完成了代码与构建层准备，未执行板级操作。
+
+**Execution precondition:**
+- 必须先把当前 `build/Debug/openBmsClaw.elf / .hex / .bin` 中至少一种产物烧录到 `野火小智 STM32F103C8T6 核心板（双 USB 款）`
+- 必须接入 SoC 评估板
+- 必须接入逻辑分析仪
+- 必须能看到 `USB-UART` 串口日志
+
+**Why hardware flashing is required:**
+- Task 4 的验收目标不是“代码是否存在”，而是“板子上是否真的发生了 SoC 初始化、I2C 应答、自测中断闭环和真实寄存器读值”。
+- 这些现象只有在固件被烧录并运行在真实 MCU 上时，才会通过 UART 日志和逻辑分析仪波形暴露出来。
+
 **Files:**
 - Create: `2_Action/Action-StageA-SoC-Validation.md`
 - Test: `rg -n "Stage A SoC 实板联调记录|ChipID|Logic Analyzer" 2_Action`
@@ -516,13 +573,35 @@ Expected: `openBmsClaw/build/Debug/openBmsClaw.elf`, `.hex`, `.bin` are regenera
 - [ ] **Step 4: Flash and capture the first real-board evidence**
 
 Action:
-- 烧录 `openBmsClaw/build/Debug/openBmsClaw.bin` 到当前 F103 学习板。
+- 先执行构建：
+  - `cd openBmsClaw && cmake --preset Debug && cmake --build --preset Debug`
+- 使用外部 `SWD` 调试器烧录当前固件到 F103 学习板：
+  - 推荐产物：`openBmsClaw/build/Debug/openBmsClaw.elf`
+  - 备选产物：`openBmsClaw/build/Debug/openBmsClaw.hex`
+  - 若使用 `STM32CubeProgrammer` 命令行，可参考：
+
+```bash
+/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin/STM32_Programmer_CLI -c port=SWD -w openBmsClaw/build/Debug/openBmsClaw.bin 0x08000000 -v -rst
+```
+
+- 若使用图形界面烧录：
+  1. 打开 `STM32CubeProgrammer`
+  2. 选择 `ST-LINK` / `SWD`
+  3. 点击 `Connect`
+  4. 选择 `openBmsClaw/build/Debug/openBmsClaw.bin`
+  5. 写入地址 `0x08000000`
+  6. 点击 `Start Programming`
+- 接好 UART 日志线：
+  - 学习板 `USB TO UART` 口接电脑
+  - 串口参数 `115200 8N1`
 - 连接逻辑分析仪：
   - `CH0 -> PB6 / SCL`
   - `CH1 -> PB7 / SDA`
   - `GND -> GND`
+- 若接 SoC INT 线，自测闭环时应同步确认 INT 对应引脚连接到当前配置脚位
 - 上电后记录 UART 日志，至少捕获以下之一：
   - `SAL: SoC(demo) init OK, ChipID=...`
+  - `bringup: soc sal init ok`
   - `bringup: soc poll online mask=...`
   - `bringup: soc int selftest PASS`
 - 把实际地址、寄存器、ACK/NACK 现象填入 `2_Action/Action-StageA-SoC-Validation.md`。
@@ -530,6 +609,32 @@ Action:
 Expected:
 - 至少拿到一个真实值：`ChipID` / `Voltage` / `Temperature`
 - 至少保存一份逻辑分析仪截图或导出文件路径
+
+- [ ] **Step 4.1: Bench debug checklist**
+
+执行 Task 4 时，建议按以下顺序调试，避免一上来就把“代码、烧录、接线、总线、SoC 寄存器”混在一起排查：
+
+1. 先确认烧录成功
+   - 板子复位后，串口至少应能看到 `boot ok`
+2. 再确认 bring-up 日志存在
+   - 理想情况下应看到：
+     - `PowerService: Init OK, emergency callback registered.`
+     - `bringup: soc sal init ...`
+3. 再确认 I2C 是否有真实波形
+   - 逻辑分析仪上应能看到 `SCL/SDA`
+   - 至少能确认地址阶段是否收到 ACK
+4. 再确认 SoC 是否在线
+   - 若地址扫描到设备但 `soc sal init fail`，优先排查：
+     - SoC 地址是否正确
+     - SoC 是否已供电
+     - 地线是否共地
+     - 上拉电阻是否存在
+5. 最后再确认 EXTI 自测闭环
+   - 看 UART 是否出现 `bringup: soc int selftest PASS`
+   - 若没有 PASS，优先排查：
+     - `soc_sal_is_initialized()` 是否为真
+     - `hal_exti_init()` 是否真的成功
+     - `power_service` 是否已注册 emergency callback
 
 - [ ] **Step 5: Commit**
 

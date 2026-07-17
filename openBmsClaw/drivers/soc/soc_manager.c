@@ -35,9 +35,19 @@ static void soc_sal_exti_hardware_handler(void) {
 }
 
 bool soc_sal_init(uint8_t i2c_addr) {
+  bool exti_ready = true;
+
+  s_sal_initialized = false;
   s_soc_i2c_addr = i2c_addr;
   s_recovery_count = 0u;
   s_ops = demo_soc_get_ops(); /* 当前选择 demo/基线适配器 */
+
+  if (board_has_uart_log()) {
+    char msg[64];
+    (void)snprintf(msg, sizeof(msg), "SAL: init start addr=0x%02X\r\n",
+                   (unsigned int)s_soc_i2c_addr);
+    board_uart_write_string(msg);
+  }
 
   if (!hal_i2c_init()) {
     if (board_has_uart_log()) {
@@ -48,20 +58,33 @@ bool soc_sal_init(uint8_t i2c_addr) {
   }
 
   if (s_ops->init(s_soc_i2c_addr) != SOC_SAL_OK) {
+    if (board_has_uart_log()) {
+      board_uart_write_string("SAL: vendor init failed!\r\n");
+    }
     s_sal_initialized = false;
     return false;
   }
 
-  s_sal_initialized = true;
-
 #if CONFIG_ENABLE_SOC_INT_HIGHWAY
   /* 初始化中断高速告警信道：PA4 (PORT_A, Pin 4)，下降沿触发，绑定本地处理器 */
-  (void)hal_exti_init(HAL_EXTI_PORT_A, CONFIG_SOC_INT_PIN_INDEX,
-                      HAL_EXTI_TRIGGER_FALLING, soc_sal_exti_hardware_handler);
+  exti_ready = hal_exti_init(HAL_EXTI_PORT_A, CONFIG_SOC_INT_PIN_INDEX,
+                             HAL_EXTI_TRIGGER_FALLING,
+                             soc_sal_exti_hardware_handler);
+  if (board_has_uart_log()) {
+    board_uart_write_string(exti_ready ? "SAL: EXTI init ok\r\n"
+                                       : "SAL: EXTI init fail\r\n");
+  }
+  if (!exti_ready) {
+    s_sal_initialized = false;
+    return false;
+  }
 #endif
 
+  s_sal_initialized = true;
   return true;
 }
+
+bool soc_sal_is_initialized(void) { return s_sal_initialized; }
 
 void soc_sal_bus_recovery(void) {
   s_recovery_count++;
