@@ -38,8 +38,8 @@
 
 ## 当前优先研究
 
-1. 电芯供应商分层。
-2. BMS 供应商与安全能力。
-3. PCS/逆变器供应商的日本并网适配能力。
-4. PACK 厂的一致性、测试和认证配合能力。
-
+1. [Day04_core-component-suppliers-layer-map.md](./Day04_core-component-suppliers-layer-map.md)
+2. 电芯供应商分层。
+3. BMS 供应商与安全能力。
+4. PCS/逆变器供应商的日本并网适配能力。
+5. PACK 厂的一致性、测试和认证配合能力。
