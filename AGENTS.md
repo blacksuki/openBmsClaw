@@ -38,7 +38,7 @@
 ### 2.1 当前主项目层
 - [0_System/03.tech_architecture.md](0_System/03.tech_architecture.md)
 - [0_System/01.project_kickoff_proposal.md](0_System/01.project_kickoff_proposal.md)
-- [0_System/10.hardware_softare_frame.md](0_System/10.hardware_softare_frame.md)
+- [0_System/10.hardware_software_frame.md](0_System/10.hardware_software_frame.md)
 - [0_System/11.prepare_dev.md](0_System/11.prepare_dev.md)
 - [0_System/12.procurement_list.md](0_System/12.procurement_list.md)
 - [0_System/13.software_installation.md](0_System/13.software_installation.md)
@@ -117,7 +117,7 @@
 1. `[0_System/03.tech_architecture.md](0_System/03.tech_architecture.md)` 与 `[0_System/01.project_kickoff_proposal.md](0_System/01.project_kickoff_proposal.md)`
    当前项目名称、日本市场商业与技术启动方案、双核分工架构、SDK 集成策略及工作路径说明。
 
-2. `[0_System/10.hardware_softare_frame.md](0_System/10.hardware_softare_frame.md)`
+2. `[0_System/10.hardware_software_frame.md](0_System/10.hardware_software_frame.md)`
    当前最核心的模块化硬件 / 软件框架说明。
 
 3. `[1_Plan/Plan-Week-0325.md](1_Plan/Plan-Week-0325.md)` 及其 `item` 文档
@@ -339,7 +339,7 @@ Codex 与 Antigravity 在本仓库中工作时，应遵守以下原则：
 下列变更通常应同步更新文档：
 
 - 当前项目名称、战略与边界变化：更新 `0_System/03.tech_architecture.md` 与 `0_System/01.project_kickoff_proposal.md`
-- 模块边界变化：更新 `0_System/10.hardware_softare_frame.md`
+- 模块边界变化：更新 `0_System/10.hardware_software_frame.md`
 - 开发路线、工具链、采购变化：更新 `0_System/11-13` 系列文档
 - 当前执行计划变化：更新 `1_Plan/*.md`
 - 协作方式、约束变化：更新 `AGENTS.md`
