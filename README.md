@@ -82,7 +82,7 @@ make
 ## 🤝 Contributing
 
 We welcome contributions from power electronics engineers, embedded software developers, and product designers. 
-*   Before making significant changes, please review our [System Architecture Specification](0_System/00.tech_architecure.md).
+*   Before making significant changes, please review our [System Architecture Specification](0_System/03.tech_architecure.md).
 *   Follow the **Brain-Body Separation** principle: application code must never directly manipulate registers on the SoC without going through the abstraction drivers.
 
 ## 📄 License

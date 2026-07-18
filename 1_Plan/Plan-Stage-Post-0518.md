@@ -10,7 +10,7 @@
 
 `Plan-Week-0518.md` 的核心价值，是把 `openBmsClaw` 从最小 STM32 生成工程，推进到具备 `board / hal / drivers/soc / services / app / config` 结构、并开始具备 SoC 抽象层雏形的状态。
 
-但该计划完成后，项目仍然没有达到 `0_System/00.tech_architecure.md` 里的设计目标。当前缺的不是再写一轮“继续抽象 SAL”，而是需要把后续路径明确成几个可以逐步验收的阶段。
+但该计划完成后，项目仍然没有达到 `0_System/03.tech_architecure.md` 里的设计目标。当前缺的不是再写一轮“继续抽象 SAL”，而是需要把后续路径明确成几个可以逐步验收的阶段。
 
 本文档用于回答三个问题：
 

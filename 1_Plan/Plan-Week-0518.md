@@ -80,7 +80,7 @@
 
 ## 7. 与系统设计目标的对比结论（2026-07-01）
 
-结合 `0_System/00.tech_architecure.md` 当前阶段目标，现状可归纳为：
+结合 `0_System/03.tech_architecure.md` 当前阶段目标，现状可归纳为：
 
 ### 已完成
 

@@ -36,7 +36,7 @@
 本仓库当前至少包含以下几层内容：
 
 ### 2.1 当前主项目层
-- [0_System/00.tech_architecure.md](0_System/00.tech_architecure.md)
+- [0_System/03.tech_architecure.md](0_System/03.tech_architecure.md)
 - [0_System/01.project_kickoff_proposal.md](0_System/01.project_kickoff_proposal.md)
 - [0_System/10.hardware_softare_frame.md](0_System/10.hardware_softare_frame.md)
 - [0_System/11.prepare_dev.md](0_System/11.prepare_dev.md)
@@ -114,7 +114,7 @@
 ## 3. 文档优先级
 涉及需求、设计和当前工作判断时，按以下顺序理解：
 
-1. `[0_System/00.tech_architecure.md](0_System/00.tech_architecure.md)` 与 `[0_System/01.project_kickoff_proposal.md](0_System/01.project_kickoff_proposal.md)`
+1. `[0_System/03.tech_architecure.md](0_System/03.tech_architecure.md)` 与 `[0_System/01.project_kickoff_proposal.md](0_System/01.project_kickoff_proposal.md)`
    当前项目名称、日本市场商业与技术启动方案、双核分工架构、SDK 集成策略及工作路径说明。
 
 2. `[0_System/10.hardware_softare_frame.md](0_System/10.hardware_softare_frame.md)`
@@ -338,7 +338,7 @@ Codex 与 Antigravity 在本仓库中工作时，应遵守以下原则：
 ## 9. 文档更新规则
 下列变更通常应同步更新文档：
 
-- 当前项目名称、战略与边界变化：更新 `0_System/00.tech_architecure.md` 与 `0_System/01.project_kickoff_proposal.md`
+- 当前项目名称、战略与边界变化：更新 `0_System/03.tech_architecure.md` 与 `0_System/01.project_kickoff_proposal.md`
 - 模块边界变化：更新 `0_System/10.hardware_softare_frame.md`
 - 开发路线、工具链、采购变化：更新 `0_System/11-13` 系列文档
 - 当前执行计划变化：更新 `1_Plan/*.md`

@@ -2,7 +2,7 @@
 
 > 创建时间：2026-06-28
 > 适用范围：`openBmsClaw/` 当前 F103 bring-up 工程
-> 关联架构：[0_System/00.tech_architecure.md](../0_System/00.tech_architecure.md)
+> 关联架构：[0_System/03.tech_architecure.md](../0_System/03.tech_architecure.md)
 
 本文记录当前代码中已经识别、但在 startup / bring-up 阶段暂时接受的架构偏差。它们不是当前路线错误，而是后续从 demo 骨架进入真实 SoC 联调、F030 候补验证和最小量产链路前必须逐步清理的技术债。
 
@@ -109,7 +109,7 @@
 
 1. 保留公共能力 API：`soc_get_voltage`、`soc_get_temperature`、`soc_set_ocp`、`soc_poll_events`。
 2. 将 demo register 移入 `drivers/soc/vendor/demo_soc.c` 或 `vendor/injoinic_ip53xx.c`。
-3. 新增 adapter 接口。签名按当前 `soc_sal.h` 实际 API + `00.tech_architecure.md §5.3` 单位口径（mV/mA/mW、功率 `uint32`）统一：
+3. 新增 adapter 接口。签名按当前 `soc_sal.h` 实际 API + `03.tech_architecure.md §5.3` 单位口径（mV/mA/mW、功率 `uint32`）统一：
 
 ```c
 typedef struct {
@@ -368,7 +368,7 @@ typedef struct {
 | 3 | **新增 `board_get_tick_ms()` 时间基准**（前置，原文档缺） | ISSUE-005 前置 ✅ 已完成（2026-06-28） | 无 |
 | 4 | 替换 busy-wait UI：`power` 与 `ui` 两处一并改 tick 驱动 | ISSUE-005 ✅ 已完成（2026-06-28） | 依赖 3 |
 | 5 | 拆 SAL 公共头：`soc_types.h` / `soc_api.h`，HAL include 下沉 | ISSUE-001 ✅ 已完成（2026-06-28） | 无 |
-| 6 | SoC adapter 化：签名对齐 `00.tech_architecure.md §5.3` 口径 | ISSUE-002 ✅ 已完成（2026-06-29） | 依赖 5 |
+| 6 | SoC adapter 化：签名对齐 `03.tech_architecure.md §5.3` 口径 | ISSUE-002 ✅ 已完成（2026-06-29） | 依赖 5 |
 | 7 | 真实硬件验证：SoC INT、故障寄存器、限流/关断、I2C 恢复 | ISSUE-006 | 依赖评估板 |
 
 ## 3. 当前验证状态
