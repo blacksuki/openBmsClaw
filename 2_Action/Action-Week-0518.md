@@ -78,7 +78,7 @@
 - **计划定位**：周末
 - **当前状态**：✅ **已完成 (Completed)**
 - **执行详情**：
-  1. `0_System/03.tech_architecure.md` 已升级为可执行的顶层架构约束文档。
+  1. `0_System/03.tech_architecture.md` 已升级为可执行的顶层架构约束文档。
   2. `2_Action/Action-Week-0518-startup-tech-debt-issues.md` 已记录 startup 技术债并跟踪部分 issue 的整改状态。
   3. `0_System/Course/` 已回写中断快/慢路径、配置三层模型、验证分层、接口泄露等教学内容。
 
