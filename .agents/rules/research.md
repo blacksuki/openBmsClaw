@@ -6,7 +6,7 @@ This file provides guidance to Antigravity during the **Analysis & Exploration**
 
 ## 1. Primary Sources of Truth
 When researching design specifications, current state, or upcoming steps:
-- **Architecture & System Design**: Refer to `0_System/00.tech_archture.md` (Strategy/Tech), `0_System/01.update_arch.md` (Roadmap updates), and `0_System/10.hardware_softare_frame.md` (Core Software/Hardware Architecture).
+- **Architecture & System Design**: Refer to `0_System/00.tech_archture.md` (Strategy/Tech), `0_System/01.project_kickoff_proposal.md` (Project kickoff proposal / origin), and `0_System/10.hardware_softare_frame.md` (Core Software/Hardware Architecture).
 - **MCU Roadmaps & Hardware**: Refer to `0_System/11.prepare_dev.md` through `0_System/16.mcu_hardware_selection.md`.
 - **Plans & Tasks**: Check `1_Plan/Plan-Week-0325.md` (and other weekly/phase plan files) as well as the actions recorded under `2_Action/`.
 - **Active Code Fact**: Always treat `openBmsClaw/` as the single source of truth for active code implementation.
