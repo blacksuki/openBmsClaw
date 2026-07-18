@@ -31,6 +31,7 @@ These bias toward caution over speed; use judgment on trivial tasks.
 | `1_Plan/`, `2_Action/` | Weekly milestones and action items | Current execution plan |
 | `openBmsClaw/` | STM32 firmware project | **Authoritative** for code facts |
 | `90_documents/`, `91.reference/` | External docs, reference SoC selection guides, archives | Reference only — don't rewrite |
+| `91.energy-storage-learning/` | 储能 mentor learning content (separate track) | Out of firmware/planning scope |
 | `build/` (root) | Stray generated artifacts | Generated; don't hand-edit |
 | `AGENTS.md` (root + `openBmsClaw/`) | Detailed collaboration rules | Read these — see below |
 
@@ -62,14 +63,14 @@ Strict layering, top to bottom. **Each layer only calls the one below it**:
 Src/main.c            thin entry: board_init() → app_init() → app_run() loop (keep it thin)
 app/                  product orchestration; wires services together
 services/             bms · power · protocol · ui · bringup · dock  (coordination, no registers)
-drivers/soc/          vendor-agnostic SoC abstraction: soc_api.h (public) · soc_types.h · soc_driver.h (ops vtable) · soc_manager.c (forwards to active adapter) · vendor/<chip>.c (register tables live here only)
+drivers/soc/          vendor-agnostic SoC abstraction: soc_api.h (public) · soc_types.h · soc_driver.h (ops vtable) · soc_manager.c (forwards to active adapter) · vendor/<chip>.c (register tables live here only; currently just the demo_soc.c placeholder)
 drivers/{adc,i2c}/    MCU peripheral probes (GPIO/UART/I2C/ADC access)
 hal/{i2c,exti}/       hides chip differences
 board/                pin mapping, board capabilities (board_stm32f103c8t6_usb_uart.h), 1ms SysTick (board_get_tick_ms)
 config/               compile-time PROFILE / feature switches
 ```
 
-`drivers/soc/soc_sal.h` remains as a thin bring-up entry (it re-exports `soc_api.h` and declares the self-test hook `soc_sal_int_selftest_trigger()`, called only from `bringup_service`). Adding a second SoC = a new `vendor/<chip>.c` implementing `soc_driver_ops_t` + a selection line in `soc_manager.c`; `app/` and `services/` don't change. Note: `soc_sal_init()` is not yet wired into the runtime path, so the SoC link is structurally complete but not yet closed on real hardware — see `1_Plan/Plan-Stage-Post-0518.md`.
+`drivers/soc_sal.h` remains as a thin bring-up entry (it re-exports `soc_api.h` and declares the self-test hook `soc_sal_int_selftest_trigger()`, called only from `bringup_service`). Adding a second SoC = a new `vendor/<chip>.c` implementing `soc_driver_ops_t` + a selection line in `soc_manager.c`; `app/` and `services/` don't change. Note: `soc_sal_init()` is now wired into the bring-up path — `bringup_service` runs it in its stage machine (`BRINGUP_STAGE_SOC_SAL_INIT`, gated on a successful I2C scan), so the SoC link is closed in-firmware but **not yet verified on real hardware** — see `1_Plan/Plan-Stage-Post-0518.md`.
 
 **Layering rules (enforced by convention, not the compiler):**
 - `app/` and `services/` must never access registers directly.
@@ -80,6 +81,7 @@ config/               compile-time PROFILE / feature switches
 - `config/feature_config.h` → `FEATURE_ENABLE_*` = **compile axis** (which capabilities/probes are built), per PROFILE.
 - `config/app_config.h` → `APP_ENABLE_*` = **schedule axis** (which services `app_init()`/`app_run()` call), per PROFILE.
 - A service runs only when both axes agree: `app.c` gates it as `#if APP_ENABLE_<X> && FEATURE_ENABLE_<X>`. To bring a service online, adjust the PROFILE-derived values, not the call sites.
+- `config/board_config.h` selects the active board header (`BOARD_CURRENT_*` → includes `board/board_stm32f103c8t6_usb_uart.h`).
 - `config/sys_config.h` aggregates the includes and holds `CONFIG_*` system settings (I2C timeout, bus recovery, SoC INT highway, `CONFIG_ENABLE_BRINGUP_SELFTEST`).
 - Do **not** reintroduce a feature switch with an independent value in a second file — the PROFILE-derived model exists specifically to kill that "double truth" (history in `2_Action/Action-Week-0518-startup-tech-debt-issues.md`).
 
