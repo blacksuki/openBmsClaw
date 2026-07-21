@@ -1,6 +1,6 @@
 # 硬件架构 / Power Tree 模板（卡2 · 启动阶段交付物）
 
-> 用法：Chief Architect 硬件侧产出，由卡2（外包硬件团队）填写、卡1 owner review 后方可进阶段门。与 `03.tech_architecture.md` ADR-001（双芯架构）一致；本模板补 03 缺的硬件框图与 power tree。不含 PCB 布局（PCB 属卡2 开发中交付物）。
+> 用法：Chief Architect 硬件侧产出，由卡2（外包硬件团队）填写、卡1 owner review 后方可进阶段门。与 `05.technology_roadmap.md` ADR-001（双芯架构）一致；本模板补架构总纲（03）缺的硬件框图与 power tree（实例化为 `07.hardware_architecture.md`）。不含 PCB 布局（PCB 属卡2 开发中交付物）。
 
 ## 1. 系统框图
 
